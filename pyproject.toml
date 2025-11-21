@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "pybind11>=2.6.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sigma-c-framework"
+version = "1.0.0"
+description = "Omnipotent Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "AGPL-3.0-or-later OR Commercial"}
+authors = [
+    {name = "ForgottenForge", email = "nfo@forgottenforge.xyz"}
+]
+keywords = ["critical-phenomena", "phase-transitions", "quantum-computing", "gpu-optimization", "financial-analysis", "climate-science", "seismology", "susceptibility"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "pandas>=1.3.0",
+    "tqdm>=4.60.0",
+    "matplotlib>=3.4.0",
+    "seaborn>=0.11.0",
+    "requests>=2.25.0",
+    "yfinance>=0.1.63",
+]
+
+[project.optional-dependencies]
+quantum = ["amazon-braket-sdk>=1.9.0"]
+gpu = ["cupy>=9.0.0"]
+dev = ["pytest>=6.0", "black>=21.0", "mypy>=0.900"]
+
+[project.urls]
+Homepage = "https://github.com/forgottenforge/sigmacore"
+Documentation = "https://github.com/forgottenforge/sigmacore/blob/main/DOCUMENTATION.md"
+Repository = "https://github.com/forgottenforge/sigmacore"
+Issues = "https://github.com/forgottenforge/sigmacore/issues"
+
+[tool.setuptools]
+packages = ["sigma_c", "sigma_c.core", "sigma_c.adapters", "sigma_c.stats"]
+gpu = ["cupy-cuda12x>=12.0.0"]
+quantum = ["amazon-braket-sdk>=1.50.0"]
+test = ["pytest>=7.0.0"]
