@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sigma-C Specific
+# Exclude original example scripts (keep only examples_v4/)
+examples/code/
+examples/*.py
+
+# Exclude cache directories
+cache/
+cache_*/
+era5_cache/
+cache_fin/
+cache_seis/
+out_seis/
+output_fin/
+
+# Exclude output files
+*.png
+*.pdf
+*.json
+*.txt
+!requirements.txt
+!license_*.txt
+!LICENSE.txt
+
+# Exclude validation/test outputs
+*_output/
+*_results/
+verify_output*.txt
+
+# Build artifacts
+*.o
+*.obj
+*.lib
+*.dll
+*.dylib
+*.a
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation builds
+docs/_build/

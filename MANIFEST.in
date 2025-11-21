@@ -1,0 +1,23 @@
+include README.md
+include LICENSE.txt
+include license_AGPL.txt
+include license_COMMERCIAL.txt
+include DOCUMENTATION.md
+include QUICKSTART.md
+include pyproject.toml
+
+# Include C++ source and headers
+recursive-include sigma_c_core/src *.cpp *.hpp
+recursive-include sigma_c_core/include *.hpp
+
+# Include Python package
+recursive-include sigma_c *.py
+
+# Include examples (only v4)
+recursive-include examples_v4 *.py
+
+# Exclude unwanted files
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude .DS_Store
