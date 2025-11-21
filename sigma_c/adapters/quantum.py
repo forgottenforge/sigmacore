@@ -68,8 +68,9 @@ class QuantumAdapter(SigmaCAdapter):
             
         circuit_type = kwargs.get('circuit_type', 'grover')
         
-        if circuit_type == 'grover':
-            # Success probability of '11'
+        if circuit_type == 'grover' or circuit_type == 'custom':
+            # Success probability of '11' (Default for custom/Grover)
+            # In a real generic case, we'd need a target state param
             return data.get('11', 0) / total
         elif circuit_type == 'qaoa':
             # MaxCut value
@@ -231,8 +232,15 @@ class QuantumAdapter(SigmaCAdapter):
             batch_seed = int(eps * 10000)
             if circuit_type == 'grover':
                 circuit = self.create_grover_with_noise(epsilon=eps, batch_seed=batch_seed, **kwargs)
-            else:
+            elif circuit_type == 'qaoa':
                 circuit = self.create_qaoa_with_noise(epsilon=eps, batch_seed=batch_seed, **kwargs)
+            elif circuit_type == 'custom' and 'custom_circuit' in kwargs:
+                # For custom circuits, we can't easily inject noise into the structure 
+                # without knowing it. In simulation mode, we rely on the 'eps' param 
+                # in the result generation below.
+                circuit = kwargs['custom_circuit']
+            else:
+                circuit = self.create_grover_with_noise(epsilon=eps, batch_seed=batch_seed, **kwargs)
             
             # Run on device
             if _HAS_BRAKET:
@@ -240,7 +248,13 @@ class QuantumAdapter(SigmaCAdapter):
                 counts = task.result().measurement_counts
             else:
                 # Simulated result for testing without Braket
-                counts = {'11': int(kwargs.get('shots', 100) * (0.9 - eps)), '00': int(kwargs.get('shots', 100) * (0.1 + eps))}
+                # Simulate degradation with epsilon
+                # Base success rate 0.9, degrades with eps
+                success_prob = max(0.1, 0.9 - 2.0 * eps) 
+                n_shots = kwargs.get('shots', 100)
+                n_success = int(n_shots * success_prob)
+                n_fail = n_shots - n_success
+                counts = {'11': n_success, '00': n_fail}
             
             obs = self.get_observable(counts, circuit_type=circuit_type)
             observables.append(obs)
@@ -539,3 +553,44 @@ class QuantumAdapter(SigmaCAdapter):
             recs.append("- Results look reasonable - proceed with full analysis")
         
         return "\n".join(recs)
+
+    # ========== v1.2.0: Universal Rigor Integration ==========
+
+    def optimize_circuit(self, 
+                        circuit_factory: Any, 
+                        param_space: Dict[str, List[Any]],
+                        strategy: str = 'brute_force') -> Dict[str, Any]:
+        """
+        Optimize a quantum circuit using the BalancedQuantumOptimizer.
+        
+        Args:
+            circuit_factory: Callable that returns a circuit given params.
+            param_space: Dictionary of parameter names and values to sweep.
+            strategy: Optimization strategy ('brute_force').
+            
+        Returns:
+            OptimizationResult as a dictionary.
+        """
+        from ..optimization.quantum import BalancedQuantumOptimizer
+        
+        optimizer = BalancedQuantumOptimizer(self)
+        result = optimizer.optimize_circuit(circuit_factory, param_space, strategy)
+        
+        return {
+            'optimal_params': result.optimal_params,
+            'score': result.score,
+            'sigma_c_before': result.sigma_c_before,
+            'sigma_c_after': result.sigma_c_after,
+            'performance_improvement': result.performance_after - result.performance_before
+        }
+
+    def validate_rigorously(self, sigma_c_value: float, n_qubits: int) -> Dict[str, Any]:
+        """
+        Validate a sigma_c result against rigorous quantum bounds.
+        """
+        from ..physics.quantum import RigorousQuantumSigmaC
+        
+        checker = RigorousQuantumSigmaC()
+        context = {'n_qubits': n_qubits}
+        
+        return checker.validate_sigma_c(sigma_c_value, context)

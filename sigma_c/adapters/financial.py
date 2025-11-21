@@ -162,3 +162,47 @@ class FinancialAdapter(SigmaCAdapter):
     def _domain_specific_explain(self, result: Dict[str, Any], **kwargs) -> str:
         """Financial-specific explanation."""
         return f"# Financial Regime Analysis\n\nσ_c: {result.get('sigma_c', 'N/A')}\nκ: {result.get('kappa', 'N/A')}\n\nLower σ_c = more frequent regime changes\nHigher κ = sharper transitions"
+
+    # ========================================================================
+    # v1.2.0: Universal Rigor Integration
+    # ========================================================================
+
+    def optimize_strategy(self, 
+                         param_space: Dict[str, List[Any]],
+                         strategy: str = 'brute_force') -> Dict[str, Any]:
+        """
+        Optimize a financial strategy using the BalancedFinancialOptimizer.
+        
+        Args:
+            param_space: Dictionary of parameter names and values to sweep.
+            strategy: Optimization strategy ('brute_force').
+            
+        Returns:
+            OptimizationResult as a dictionary.
+        """
+        from ..optimization.financial import BalancedFinancialOptimizer
+        
+        optimizer = BalancedFinancialOptimizer(self)
+        result = optimizer.optimize_strategy(param_space, strategy)
+        
+        return {
+            'optimal_params': result.optimal_params,
+            'score': result.score,
+            'sigma_c_before': result.sigma_c_before,
+            'sigma_c_after': result.sigma_c_after,
+            'performance_improvement': result.performance_after - result.performance_before
+        }
+
+    def validate_rigorously(self, sigma_c_value: float, n_assets: int = 500) -> Dict[str, Any]:
+        """
+        Validate a sigma_c result against rigorous Financial bounds (RMT).
+        """
+        from ..physics.financial import RigorousFinancialSigmaC
+        
+        checker = RigorousFinancialSigmaC()
+        context = {
+            'T': 252,
+            'N': n_assets
+        }
+        
+        return checker.validate_sigma_c(sigma_c_value, context)
