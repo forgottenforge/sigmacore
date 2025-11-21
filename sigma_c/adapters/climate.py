@@ -97,3 +97,52 @@ class ClimateAdapter(SigmaCAdapter):
             'sigma_range': sigma_range,
             'observable': observables
         }
+
+    # ========== v1.1.0: Climate Diagnostics ==========
+    
+    def _domain_specific_diagnose(self, data: Optional[np.ndarray] = None, **kwargs) -> Dict[str, Any]:
+        """Climate-specific diagnostics."""
+        issues, recommendations, details = [], [], {}
+        
+        if data is None:
+            return {'status': 'error', 'issues': ['No data'], 'recommendations': ['Provide climate data'], 'auto_fix': None, 'details': {}}
+        
+        details['data_shape'] = data.shape
+        if data.ndim != 2:
+            issues.append(f"Expected 2D grid, got {data.ndim}D")
+            recommendations.append("Provide spatial grid data")
+        elif min(data.shape) < 10:
+            issues.append(f"Grid too small: {data.shape}")
+            recommendations.append("Use larger spatial grid")
+        
+        status = 'ok' if not issues else 'warning'
+        return {'status': status, 'issues': issues, 'recommendations': recommendations, 'auto_fix': None, 'details': details}
+    
+    def _domain_specific_auto_search(self, param_ranges: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+        """Auto-search optimal climate parameters."""
+        grid_sizes = [32, 64, 128] if param_ranges is None else list(range(*param_ranges['grid_size']))
+        results = []
+        
+        for size in grid_sizes:
+            try:
+                result = self.analyze_climate_criticality(grid_size=size)
+                results.append({'grid_size': size, 'sigma_c': result['sigma_c'], 'kappa': result['kappa'], 'success': True})
+            except Exception as e:
+                results.append({'grid_size': size, 'sigma_c': 0, 'kappa': 0, 'success': False, 'error': str(e)})
+        
+        successful = [r for r in results if r.get('success', False)]
+        if not successful:
+            return {'best_params': {}, 'all_results': results, 'convergence_data': {}, 'recommendation': 'No successful runs'}
+        
+        best = max(successful, key=lambda x: x['kappa'])
+        return {'best_params': {'grid_size': best['grid_size']}, 'all_results': results, 'convergence_data': {'n_successful': len(successful)}, 'recommendation': f"Use grid_size={best['grid_size']} (κ={best['kappa']:.2f})"}
+    
+    def _domain_specific_validate(self, data: Optional[np.ndarray] = None, **kwargs) -> Dict[str, bool]:
+        """Validate climate techniques."""
+        if data is None:
+            return {'data_provided': False, 'valid_grid': False}
+        return {'data_provided': True, 'valid_grid': data.ndim == 2 and min(data.shape) >= 10}
+    
+    def _domain_specific_explain(self, result: Dict[str, Any], **kwargs) -> str:
+        """Climate-specific explanation."""
+        return f"# Climate Criticality Analysis\n\nσ_c: {result.get('sigma_c', 'N/A')}\nκ: {result.get('kappa', 'N/A')}\n\nHigher κ = stronger spatial correlations"

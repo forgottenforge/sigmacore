@@ -21,3 +21,8 @@ global-exclude __pycache__
 global-exclude *.py[cod]
 global-exclude *.so
 global-exclude .DS_Store
+
+# Exclude test and validation scripts from root
+exclude test_*.py
+exclude validate_*.py
+exclude verify_*.py

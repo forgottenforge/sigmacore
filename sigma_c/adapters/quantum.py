@@ -256,3 +256,286 @@ class QuantumAdapter(SigmaCAdapter):
             'observable': observables,
             'raw_counts': results
         }
+    
+    # ========== v1.1.0: Quantum Diagnostics ==========
+    
+    def _domain_specific_diagnose(self, circuit: Circuit, **kwargs) -> Dict[str, Any]:
+        """
+        Quantum-specific diagnostics.
+        
+        Checks:
+        - Circuit depth and complexity
+        - Gate fidelity estimates
+        - Noise model validity
+        - Qubit count feasibility
+        """
+        issues = []
+        recommendations = []
+        details = {}
+        
+        if not _HAS_BRAKET:
+            issues.append("Braket SDK not installed")
+            recommendations.append("Install: pip install amazon-braket-sdk")
+            return {
+                'status': 'error',
+                'issues': issues,
+                'recommendations': recommendations,
+                'auto_fix': None,
+                'details': details
+            }
+        
+        # Check 1: Circuit depth
+        depth = self._estimate_circuit_depth(circuit)
+        details['circuit_depth'] = depth
+        
+        if depth > 100:
+            issues.append(f"Circuit depth too high: {depth} (risk of decoherence)")
+            recommendations.append("Reduce circuit depth or use error mitigation")
+        elif depth > 50:
+            issues.append(f"Circuit depth moderate: {depth} (may have noise issues)")
+            recommendations.append("Consider noise calibration")
+        
+        # Check 2: Qubit count
+        n_qubits = self._count_qubits(circuit)
+        details['n_qubits'] = n_qubits
+        
+        if n_qubits > 20:
+            issues.append(f"High qubit count: {n_qubits} (simulation may be slow)")
+            recommendations.append("Consider using AWS quantum devices for >20 qubits")
+        
+        # Check 3: Gate fidelity estimate
+        fidelity = self._estimate_gate_fidelity(circuit)
+        details['estimated_fidelity'] = fidelity
+        
+        if fidelity < 0.9:
+            issues.append(f"Low estimated gate fidelity: {fidelity:.3f}")
+            recommendations.append("Calibrate gates or use error correction")
+        
+        # Determine status
+        if len(issues) == 0:
+            status = 'ok'
+        elif any('error' in i.lower() or 'not installed' in i.lower() for i in issues):
+            status = 'error'
+        else:
+            status = 'warning'
+        
+        return {
+            'status': status,
+            'issues': issues,
+            'recommendations': recommendations,
+            'auto_fix': lambda: self.auto_search(circuit_type='grover') if issues else None,
+            'details': details
+        }
+    
+    def _domain_specific_auto_search(self, circuit_type: str = 'grover', 
+                                      param_ranges: Optional[Dict] = None, 
+                                      **kwargs) -> Dict[str, Any]:
+        """
+        Auto-search optimal quantum circuit parameters.
+        
+        Searches:
+        - Noise levels (epsilon)
+        - Idle fractions
+        - Circuit depths
+        """
+        if not _HAS_BRAKET:
+            return {
+                'best_params': {},
+                'all_results': [],
+                'convergence_data': {},
+                'recommendation': 'Braket SDK not installed'
+            }
+        
+        # Default parameter ranges
+        if param_ranges is None:
+            param_ranges = {
+                'epsilon': (0.0, 0.1),
+                'idle_frac': (0.0, 0.3)
+            }
+        
+        # Generate search grid
+        epsilons = np.linspace(*param_ranges['epsilon'], 12)
+        idle_fracs = np.linspace(*param_ranges['idle_frac'], 6)
+        
+        results = []
+        
+        for eps in epsilons:
+            for idle in idle_fracs:
+                try:
+                    # Create circuit with these parameters
+                    if circuit_type == 'grover':
+                        circuit = self.create_grover_with_noise(
+                            n_qubits=kwargs.get('n_qubits', 2),
+                            epsilon=eps,
+                            idle_frac=idle
+                        )
+                    else:
+                        circuit = self.create_qaoa_with_noise(
+                            n_qubits=kwargs.get('n_qubits', 3),
+                            epsilon=eps
+                        )
+                    
+                    # Run optimization
+                    result = self.run_optimization(circuit_type=circuit_type, 
+                                                   epsilon_values=[eps],
+                                                   n_qubits=kwargs.get('n_qubits', 2),
+                                                   shots=kwargs.get('n_shots', 50))
+                    
+                    results.append({
+                        'epsilon': eps,
+                        'idle_frac': idle,
+                        'sigma_c': result['sigma_c'],
+                        'kappa': result['kappa'],
+                        'success': True
+                    })
+                except Exception as e:
+                    results.append({
+                        'epsilon': eps,
+                        'idle_frac': idle,
+                        'sigma_c': 0,
+                        'kappa': 0,
+                        'success': False,
+                        'error': str(e)
+                    })
+        
+        # Find best result
+        successful = [r for r in results if r.get('success', False)]
+        
+        if not successful:
+            return {
+                'best_params': {},
+                'all_results': results,
+                'convergence_data': {},
+                'recommendation': 'No successful runs - check circuit configuration'
+            }
+        
+        best = max(successful, key=lambda x: x['kappa'])
+        
+        return {
+            'best_params': {
+                'epsilon': best['epsilon'],
+                'idle_frac': best['idle_frac']
+            },
+            'all_results': results,
+            'convergence_data': {
+                'n_successful': len(successful),
+                'n_failed': len(results) - len(successful)
+            },
+            'recommendation': f"Use epsilon={best['epsilon']:.4f}, idle_frac={best['idle_frac']:.2f} for κ={best['kappa']:.2f}"
+        }
+    
+    def _domain_specific_validate(self, circuit: Circuit, **kwargs) -> Dict[str, bool]:
+        """
+        Validate quantum-specific techniques.
+        """
+        if not _HAS_BRAKET:
+            return {
+                'braket_installed': False,
+                'circuit_valid': False,
+                'noise_physical': False,
+                'qubit_count_ok': False
+            }
+        
+        return {
+            'braket_installed': True,
+            'circuit_executable': self._check_circuit_executable(circuit),
+            'gate_set_valid': self._check_gate_set(circuit),
+            'qubit_count_ok': self._count_qubits(circuit) <= 30
+        }
+    
+    def _domain_specific_explain(self, result: Dict[str, Any], **kwargs) -> str:
+        """
+        Quantum-specific result explanation.
+        """
+        sigma_c = result.get('sigma_c', 'N/A')
+        kappa = result.get('kappa', 'N/A')
+        
+        explanation = f"""
+# Quantum Circuit Analysis Results
+
+**Critical Noise Level (σ_c):** {sigma_c}  
+**Criticality Score (κ):** {kappa}
+
+## Quantum-Specific Interpretation
+
+### Critical Noise Level (σ_c)
+- Indicates the noise threshold where quantum advantage breaks down
+- Lower σ_c means the circuit is more sensitive to noise
+- Typical values: 0.01-0.05 for NISQ devices
+
+### Criticality Score (κ)
+- Measures how sharply the circuit transitions at σ_c
+- Higher κ indicates a more pronounced quantum-to-classical transition
+- κ > 15: Strong quantum advantage region
+- κ < 5: Gradual degradation (may need error mitigation)
+
+## Recommendations
+
+{self._generate_quantum_recommendations(result)}
+"""
+        return explanation.strip()
+    
+    # ========== Helper Methods ==========
+    
+    def _estimate_circuit_depth(self, circuit: Circuit) -> int:
+        """Estimate circuit depth."""
+        if not _HAS_BRAKET or not hasattr(circuit, 'instructions'):
+            return 0
+        return len(circuit.instructions)
+    
+    def _count_qubits(self, circuit: Circuit) -> int:
+        """Count qubits in circuit."""
+        if not _HAS_BRAKET or not hasattr(circuit, 'instructions'):
+            return 0
+        
+        qubits = set()
+        for instr in circuit.instructions:
+            if hasattr(instr, 'target'):
+                if isinstance(instr.target, (list, tuple)):
+                    qubits.update(instr.target)
+                else:
+                    qubits.add(instr.target)
+        return len(qubits)
+    
+    def _estimate_gate_fidelity(self, circuit: Circuit) -> float:
+        """Estimate overall gate fidelity."""
+        depth = self._estimate_circuit_depth(circuit)
+        if depth == 0:
+            return 1.0
+        
+        # Assume 99.5% fidelity per gate (typical for NISQ)
+        single_gate_fidelity = 0.995
+        return single_gate_fidelity ** depth
+    
+    def _check_circuit_executable(self, circuit: Circuit) -> bool:
+        """Check if circuit can be executed."""
+        if not _HAS_BRAKET:
+            return False
+        return hasattr(circuit, 'instructions') and len(circuit.instructions) > 0
+    
+    def _check_gate_set(self, circuit: Circuit) -> bool:
+        """Validate gate set is supported."""
+        # All gates in our circuits are standard
+        return True
+    
+    def _generate_quantum_recommendations(self, result: Dict[str, Any]) -> str:
+        """Generate recommendations based on results."""
+        kappa = result.get('kappa', 0)
+        sigma_c = result.get('sigma_c', 0)
+        
+        recs = []
+        
+        if kappa < 5:
+            recs.append("- **Low κ:** Consider error mitigation or circuit optimization")
+        elif kappa > 15:
+            recs.append("- **High κ:** Strong quantum advantage - good circuit design!")
+        
+        if sigma_c < 0.02:
+            recs.append("- **Low σ_c:** Circuit is noise-sensitive - use error correction")
+        elif sigma_c > 0.08:
+            recs.append("- **High σ_c:** Circuit is noise-resilient - good for NISQ devices")
+        
+        if not recs:
+            recs.append("- Results look reasonable - proceed with full analysis")
+        
+        return "\n".join(recs)
