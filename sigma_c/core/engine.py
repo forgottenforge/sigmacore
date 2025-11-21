@@ -41,10 +41,12 @@ class Engine:
             result = sigma_c_core.SusceptibilityEngine.compute(
                 epsilon, observable, kernel_sigma
             )
+            chi_array = np.array(result.chi)
             return {
-                'chi': np.array(result.chi),
+                'chi': chi_array,
                 'sigma_c': result.sigma_c,
                 'kappa': result.kappa,
+                'chi_max': float(np.max(np.abs(chi_array))),
                 'smoothed': np.array(result.smoothed),
                 'baseline': result.baseline
             }
@@ -77,6 +79,7 @@ class Engine:
             'chi': chi,
             'sigma_c': epsilon[idx],
             'kappa': 0.0, # Simplified
+            'chi_max': float(np.max(chi)),
             'smoothed': smoothed,
             'baseline': 1.0
         }
