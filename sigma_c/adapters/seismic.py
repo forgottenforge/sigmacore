@@ -148,3 +148,56 @@ class SeismicAdapter(SigmaCAdapter):
             'sigma_values': sigma_values,
             'observable': obs_array
         }
+
+    # ========== v1.1.0: Seismic Diagnostics ==========
+    
+    def _domain_specific_diagnose(self, catalog: Optional[pd.DataFrame] = None, **kwargs) -> Dict[str, Any]:
+        """Seismic-specific diagnostics."""
+        issues, recommendations, details = [], [], {}
+        
+        if catalog is None:
+            return {'status': 'error', 'issues': ['No catalog'], 'recommendations': ['Provide earthquake catalog'], 'auto_fix': None, 'details': {}}
+        
+        details['catalog_size'] = len(catalog)
+        if len(catalog) < 100:
+            issues.append(f"Small catalog: {len(catalog)} events")
+            recommendations.append("Use larger catalog for statistical significance")
+        
+        if 'magnitude' in catalog.columns:
+            mag_range = catalog['magnitude'].max() - catalog['magnitude'].min()
+            details['magnitude_range'] = float(mag_range)
+            if mag_range < 2.0:
+                issues.append(f"Limited magnitude range: {mag_range:.1f}")
+                recommendations.append("Include wider magnitude range")
+        
+        status = 'ok' if not issues else 'warning'
+        return {'status': status, 'issues': issues, 'recommendations': recommendations, 'auto_fix': None, 'details': details}
+    
+    def _domain_specific_auto_search(self, param_ranges: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+        """Auto-search optimal seismic parameters."""
+        bin_sizes = np.linspace(0.5, 2.0, 6) if param_ranges is None else np.linspace(*param_ranges['bin_size'], 6)
+        results = []
+        
+        for bin_size in bin_sizes:
+            try:
+                result = self.analyze_seismicity(bin_size=bin_size)
+                results.append({'bin_size': float(bin_size), 'sigma_c': result['sigma_c'], 'kappa': result['kappa'], 'success': True})
+            except Exception as e:
+                results.append({'bin_size': float(bin_size), 'sigma_c': 0, 'kappa': 0, 'success': False, 'error': str(e)})
+        
+        successful = [r for r in results if r.get('success', False)]
+        if not successful:
+            return {'best_params': {}, 'all_results': results, 'convergence_data': {}, 'recommendation': 'No successful runs'}
+        
+        best = max(successful, key=lambda x: x['kappa'])
+        return {'best_params': {'bin_size': best['bin_size']}, 'all_results': results, 'convergence_data': {'n_successful': len(successful)}, 'recommendation': f"Use bin_size={best['bin_size']:.2f} (κ={best['kappa']:.2f})"}
+    
+    def _domain_specific_validate(self, catalog: Optional[pd.DataFrame] = None, **kwargs) -> Dict[str, bool]:
+        """Validate seismic techniques."""
+        if catalog is None:
+            return {'catalog_provided': False, 'sufficient_events': False}
+        return {'catalog_provided': True, 'sufficient_events': len(catalog) >= 100}
+    
+    def _domain_specific_explain(self, result: Dict[str, Any], **kwargs) -> str:
+        """Seismic-specific explanation."""
+        return f"# Seismic Criticality Analysis\n\nσ_c: {result.get('sigma_c', 'N/A')}\nκ: {result.get('kappa', 'N/A')}\n\nHigher κ = stronger earthquake clustering"

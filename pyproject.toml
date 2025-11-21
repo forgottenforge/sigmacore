@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigma-c-framework"
-version = "1.0.0"
-description = "Omnipotent Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
+version = "1.1.0"
+description = "Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "AGPL-3.0-or-later OR Commercial"}
@@ -54,6 +54,3 @@ Issues = "https://github.com/forgottenforge/sigmacore/issues"
 
 [tool.setuptools]
 packages = ["sigma_c", "sigma_c.core", "sigma_c.adapters", "sigma_c.stats"]
-gpu = ["cupy-cuda12x>=12.0.0"]
-quantum = ["amazon-braket-sdk>=1.50.0"]
-test = ["pytest>=7.0.0"]

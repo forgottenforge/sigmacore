@@ -1,6 +1,6 @@
 # Sigma-C Framework Documentation / Dokumentation
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Date:** November 2025  
 **Copyright:** (c) 2025 ForgottenForge.xyz
 
@@ -78,6 +78,121 @@ See the `examples_v4/` directory for runnable scripts.
 *   **Climate:** `demo_climate.py` - Finds characteristic scales of weather systems.
 *   **Seismic:** `demo_seismic.py` - Detects critical stress correlation lengths.
 *   **Magnetic:** `demo_magnetic.py` - Finds Curie temperature in 2D Ising model.
+*   **Diagnostics:** `demo_diagnostics.py` - **NEW in v1.1.0** - Comprehensive diagnostics showcase.
+
+### 5. v1.1.0: Universal Diagnostics System 🆕
+
+**New in v1.1.0:** Every adapter now includes intelligent diagnostics, automated parameter search, and human-readable explanations.
+
+#### Diagnostics API
+
+All adapters support four core diagnostic methods:
+
+```python
+from sigma_c import Universe
+
+# 1. diagnose() - Health check for your data/configuration
+adapter = Universe.quantum()
+circuit = adapter.create_grover_with_noise(n_qubits=2, epsilon=0.01)
+diag = adapter.diagnose(circuit)
+
+print(f"Status: {diag['status']}")  # 'ok', 'warning', or 'error'
+print(f"Issues: {diag['issues']}")
+print(f"Recommendations: {diag['recommendations']}")
+
+# 2. auto_search() - Find optimal parameters automatically
+search = adapter.auto_search(circuit_type='grover', n_qubits=2)
+print(f"Best params: {search['best_params']}")
+print(f"Recommendation: {search['recommendation']}")
+
+# 3. validate_techniques() - Verify domain-specific requirements
+validation = adapter.validate_techniques(circuit)
+print(f"All checks passed: {validation['all_passed']}")
+
+# 4. explain() - Human-readable result interpretation
+result = adapter.run_optimization(circuit_type='grover', n_qubits=2)
+explanation = adapter.explain(result)
+print(explanation)  # Markdown-formatted explanation
+```
+
+#### Domain-Specific Diagnostics
+
+**Quantum Domain:**
+- Circuit depth and complexity validation
+- Gate fidelity estimation
+- Noise model checks
+- Auto-search: optimal noise levels, idle fractions
+
+**GPU Domain:**
+- Cache thrashing detection
+- Memory bandwidth analysis
+- Kernel efficiency checks
+- Auto-search: optimal cache pressure (alpha)
+
+**Financial Domain:**
+- Data quality and length checks
+- Stationarity tests
+- Volatility clustering detection
+- Auto-search: optimal lookback windows
+
+**Climate Domain:**
+- Spatial grid validation
+- Coverage checks
+- Auto-search: optimal grid resolutions
+
+**Seismic Domain:**
+- Catalog completeness checks
+- Magnitude range validation
+- Auto-search: optimal spatial binning
+
+**Magnetic Domain:**
+- Lattice size validation
+- Equilibration checks
+- Auto-search: optimal temperature ranges
+
+#### Complete Workflow Example
+
+```python
+from sigma_c import Universe
+
+# Step 1: Diagnose your setup
+adapter = Universe.finance()
+diag = adapter.diagnose(symbol='^GSPC')
+
+if diag['status'] != 'ok':
+    print("⚠️ Issues detected:")
+    for issue in diag['issues']:
+        print(f"  - {issue}")
+    print("\n💡 Recommendations:")
+    for rec in diag['recommendations']:
+        print(f"  - {rec}")
+else:
+    print("✅ All checks passed!")
+
+# Step 2: Auto-search for optimal parameters
+print("\n🔍 Searching for optimal parameters...")
+search = adapter.auto_search(symbol='^GSPC')
+print(f"Best parameters: {search['best_params']}")
+
+# Step 3: Run analysis with optimal parameters
+result = adapter.detect_regime(symbol='^GSPC', **search['best_params'])
+
+# Step 4: Get human-readable explanation
+explanation = adapter.explain(result)
+print(explanation)
+```
+
+For a complete demonstration across all 6 domains, run:
+```bash
+python examples_v4/demo_diagnostics.py
+```
+
+### 6. Troubleshooting
+
+*   **Build Errors:** Ensure you have a C++17-compatible compiler installed.
+*   **Import Errors:** Verify that the package is installed in your active Python environment.
+*   **Performance Issues:** Check that you're using the correct adapter for your domain.
+*   **Diagnostics Warnings:** Run `adapter.diagnose()` to get specific recommendations.
 
 ---
 
