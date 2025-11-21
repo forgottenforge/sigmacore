@@ -1,6 +1,9 @@
 # Python
 __pycache__/
 *.py[cod]
+
+# Internal documentation (not for public)
+RELEASE.md
 *$py.class
 *.so
 *.egg
