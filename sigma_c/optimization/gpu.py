@@ -17,8 +17,10 @@ class BalancedGPUOptimizer(UniversalOptimizer):
     Optimizes GPU kernels for both speed and stability.
     """
     
-    def __init__(self, target_sigma_c: float = 0.1):
-        super().__init__(target_sigma_c)
+    def __init__(self, gpu_adapter=None, target_sigma_c: float = 0.1):
+        super().__init__()
+        self.gpu_adapter = gpu_adapter
+        self.target_sigma_c = target_sigma_c
         self.strategies = [
             'block_size_tuning',
             'memory_coalescing',
@@ -69,6 +71,48 @@ class BalancedGPUOptimizer(UniversalOptimizer):
                 new_params['precision'] = 'float16'
                 
         return new_params
+    
+    def _apply_params(self, system: Any, params: Dict[str, Any]) -> Any:
+        """Apply parameters to the GPU system."""
+        # For GPU, we typically don't modify the system directly
+        # Instead, params are used during kernel execution
+        return system
+    
+    def _evaluate_performance(self, system: Any, params: Dict[str, Any]) -> float:
+        """Evaluate GPU kernel performance (GFLOPS)."""
+        if self.gpu_adapter is not None:
+            # Use the adapter's benchmark method
+            n_launch = params.get('n_launch', 10)
+            n_mem = params.get('n_mem', 0)
+            size = params.get('size', 1024)
+            gflops = self.gpu_adapter.run_benchmark(size=size, n_launch=n_launch, n_mem=n_mem)
+            return gflops
+        else:
+            # Simulation mode
+            return 100.0 * (1.0 - params.get('n_mem', 0) * 0.01)
+    
+    def _evaluate_stability(self, system: Any, params: Dict[str, Any]) -> float:
+        """Evaluate stability (inverse of sigma_c deviation from target)."""
+        if self.gpu_adapter is not None:
+            # Run a quick sigma_c estimation
+            epsilon = np.linspace(0, 0.5, 10)
+            gflops = []
+            for eps in epsilon:
+                n_mem = int(params.get('n_mem', 0) * (1 + eps))
+                n_launch = params.get('n_launch', 10)
+                gflops.append(self.gpu_adapter.run_benchmark(n_launch=n_launch, n_mem=n_mem))
+            
+            obs = self.gpu_adapter.get_observable(np.array(gflops))
+            result = self.gpu_adapter.compute_susceptibility(epsilon, obs)
+            sigma_c = result.get('sigma_c', 0.5)
+            
+            # Stability is higher when sigma_c is close to target
+            deviation = abs(sigma_c - self.target_sigma_c)
+            stability = 1.0 / (1.0 + deviation)
+            return stability
+        else:
+            # Simulation: assume stability decreases with memory overhead
+            return 1.0 / (1.0 + params.get('n_mem', 0) * 0.1)
 
     def optimize(self, 
                  eval_function: Callable[[Dict[str, Any]], float], 
@@ -119,3 +163,16 @@ class BalancedGPUOptimizer(UniversalOptimizer):
             'score': best_score,
             'strategies_applied': self.strategies
         }
+    
+    def optimize_kernel(self, param_space: Dict[str, List[Any]], strategy: str = 'brute_force') -> 'OptimizationResult':
+        """Optimize GPU kernel using the universal optimizer framework."""
+        from . import OptimizationResult
+        
+        # Call the parent class optimize method with correct signature
+        result = super().optimize(
+            system=self.gpu_adapter,
+            param_space=param_space,
+            strategy=strategy
+        )
+        
+        return result

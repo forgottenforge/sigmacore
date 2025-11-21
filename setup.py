@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Build and installation script for the Sigma-C Framework.
 
 For commercial licensing without AGPL-3.0 obligations, contact:
-[nfo@forgottenforge.xyz]
+[info@forgottenforge.xyz]
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
@@ -31,8 +31,9 @@ ext_modules = [
 ]
 
 setup(
+
     name="sigma_c_framework",
-    version="1.2.1",
+    version="1.2.3",
     packages=find_packages(),
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
@@ -47,6 +48,12 @@ setup(
         "yfinance",
         "pynvml",
         "scikit-learn",
+        "pyyaml",
     ],
+    entry_points={
+        "console_scripts": [
+            "sigma-c=sigma_c.cli:main",
+        ],
+    },
     zip_safe=False,
 )

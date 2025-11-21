@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigma-c-framework"
-version = "1.2.1"
+version = "1.2.3"
 description = "Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "AGPL-3.0-or-later OR Commercial"}
 authors = [
-    {name = "ForgottenForge", email = "nfo@forgottenforge.xyz"}
+    {name = "ForgottenForge", email = "info@forgottenforge.xyz"}
 ]
 keywords = ["critical-phenomena", "phase-transitions", "quantum-computing", "gpu-optimization", "financial-analysis", "climate-science", "seismology", "susceptibility"]
 classifiers = [
@@ -39,6 +39,9 @@ dependencies = [
     "seaborn>=0.11.0",
     "requests>=2.25.0",
     "yfinance>=0.1.63",
+    "pynvml>=11.0.0",
+    "scikit-learn>=1.0.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
