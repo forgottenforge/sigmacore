@@ -4,7 +4,7 @@ Balanced GPU Optimizer
 Optimizes GPU kernels by balancing Performance (Throughput) and Resilience (Sigma_c).
 Includes advanced strategies: Tensor Cores, Memory Coalescing, Async Streams.
 
-Copyright (c) 2024 ForgottenForge.xyz. All rights reserved.
+Copyright (c) 2025 ForgottenForge.xyz. All rights reserved.
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
@@ -164,13 +164,13 @@ class BalancedGPUOptimizer(UniversalOptimizer):
             'strategies_applied': self.strategies
         }
     
-    def optimize_kernel(self, param_space: Dict[str, List[Any]], strategy: str = 'brute_force') -> 'OptimizationResult':
+    def optimize_kernel(self, kernel_factory: Callable, param_space: Dict[str, List[Any]], strategy: str = 'brute_force') -> 'OptimizationResult':
         """Optimize GPU kernel using the universal optimizer framework."""
         from . import OptimizationResult
         
         # Call the parent class optimize method with correct signature
         result = super().optimize(
-            system=self.gpu_adapter,
+            system=kernel_factory,
             param_space=param_space,
             strategy=strategy
         )

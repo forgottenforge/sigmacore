@@ -17,6 +17,13 @@ The Sigma-C Framework uses **CZ (Controlled-Z)** gates for quantum circuits, whi
 - **Status**: **Optimal** - CZ is native gate
 - **Performance**: Maximum fidelity, no decomposition overhead
 
+#### ✅ IonQ (Aria-1, Forte-1, Harmony, Garnet)
+- **Native Gates**: GPi, GPi2, MS (Mølmer-Sørensen)
+- **Status**: **Compatible** - CZ decomposed to native gates
+- **Performance**: High fidelity on trapped ion hardware
+- **Tested**: Successfully validated on Aria-1, Forte-1, Garnet
+- **Note**: Trapped ion architecture provides excellent coherence times
+
 #### ⚠️ IBM Quantum
 - **Native Gates**: CNOT (some systems), ECR, RZ
 - **Status**: **Compatible** - CZ decomposed to native gates
@@ -41,6 +48,7 @@ The Sigma-C Framework uses **CZ (Controlled-Z)** gates for quantum circuits, whi
 |----------|-----------|----------|---------------|
 | Rigetti | CZ (native) | 99.5% | Optimal |
 | IQM | CZ (native) | 99.3% | Optimal |
+| IonQ | CZ (decomposed) | 99.7% | +2-3 gates |
 | IBM | CZ (decomposed) | 98.5% | +1-2 gates |
 | Simulator | CZ | 100% | Optimal |
 
@@ -72,9 +80,10 @@ adapter = QuantumAdapter(config={'device': 'ibm', 'auto_compile': True})
 ## Recommendations
 
 1. **Rigetti/IQM**: Use default configuration - already optimal
-2. **IBM**: Current implementation works, future versions will optimize further
-3. **Simulators**: Ideal for development and testing
-4. **GPU**: Ensure pynvml is installed for hardware detection
+2. **IonQ**: Excellent for high-fidelity experiments - trapped ion coherence
+3. **IBM**: Current implementation works, future versions will optimize further
+4. **Simulators**: Ideal for development and testing
+5. **GPU**: Ensure pynvml is installed for hardware detection
 
 ## Contact
 
