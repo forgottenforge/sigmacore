@@ -32,10 +32,77 @@ class GPUAdapter(SigmaCAdapter):
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
+        self._peak_flops = None
+        self._peak_bandwidth = None
+        
         if not _HAS_CUPY:
             print("⚠️ CuPy not found. GPU adapter running in simulation mode.")
         else:
+            self._detect_gpu_specs()
             self._warmup()
+            
+    
+    def _detect_gpu_specs(self):
+        """Detect GPU peak FLOPS and bandwidth."""
+        try:
+            import pynvml
+            pynvml.nvmlInit()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            
+            # Get device name and compute capability
+            name = pynvml.nvmlDeviceGetName(handle)
+            if isinstance(name, bytes):
+                name = name.decode('utf-8')
+            
+            # Get clock speeds (in MHz)
+            sm_clock = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_SM)  # MHz
+            mem_clock = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_MEM)  # MHz
+            
+            # Get CUDA cores count (approximation based on device name)
+            # This is a simplified heuristic - real detection would need more info
+            cuda_cores = self._estimate_cuda_cores(name)
+            
+            # Calculate peak FLOPS (GFLOPS)
+            # FLOPS = CUDA cores * clock speed (GHz) * 2 (FMA operations)
+            self._peak_flops = cuda_cores * (sm_clock / 1000.0) * 2  # GFLOPS
+            
+            # Get memory bandwidth
+            # Bandwidth = memory clock * bus width / 8
+            # Typical values: 256-bit bus = 32 bytes, 384-bit = 48 bytes
+            bus_width_bytes = 32  # Conservative estimate
+            self._peak_bandwidth = (mem_clock / 1000.0) * bus_width_bytes * 2  # GB/s
+            
+            pynvml.nvmlShutdown()
+            
+        except Exception as e:
+            # Fallback to reasonable defaults
+            self._peak_flops = 1000.0  # 1 TFLOPS
+            self._peak_bandwidth = 500.0  # 500 GB/s
+    
+    def _estimate_cuda_cores(self, device_name: str) -> int:
+        """Estimate CUDA cores based on device name."""
+        device_name = device_name.upper()
+        
+        # Common GPU configurations
+        if 'RTX 4090' in device_name:
+            return 16384
+        elif 'RTX 4080' in device_name:
+            return 9728
+        elif 'RTX 3090' in device_name:
+            return 10496
+        elif 'RTX 3080' in device_name:
+            return 8704
+        elif 'RTX 3070' in device_name:
+            return 5888
+        elif 'A100' in device_name:
+            return 6912
+        elif 'V100' in device_name:
+            return 5120
+        elif 'T4' in device_name:
+            return 2560
+        else:
+            # Conservative default
+            return 2048
             
     def _warmup(self):
         size = 1024
@@ -387,8 +454,8 @@ Interpretation:
         checker = RigorousGPUSigmaC()
         context = {
             'arithmetic_intensity': arithmetic_intensity,
-            'peak_flops': 1000.0, # Placeholder, should be detected
-            'peak_bandwidth': 500.0
+            'peak_flops': self._peak_flops if self._peak_flops else 1000.0,
+            'peak_bandwidth': self._peak_bandwidth if self._peak_bandwidth else 500.0
         }
         
         return checker.validate_sigma_c(sigma_c_value, context)

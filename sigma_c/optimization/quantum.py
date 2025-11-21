@@ -34,18 +34,18 @@ class BalancedQuantumOptimizer(UniversalOptimizer):
             # For now, assume system is a callable factory
             raise ValueError("System must be a callable that returns a circuit given params.")
             
-        # Run on device (or simulator) with low noise to estimate "ideal" performance
-        # We use a small epsilon to get a realistic baseline, or 0 for pure fidelity
+        # Measure pure fidelity at eps=0.0 (no additional noise beyond what's in params)
+        # We run the circuit once with minimal shots to get fidelity estimate
         result = self.adapter.run_optimization(
-            circuit_type='custom', # We need to handle custom circuits in adapter
-            epsilon_values=[0.0],
+            circuit_type='custom',
+            epsilon_values=[0.0],  # No additional noise
             shots=100,
             custom_circuit=circuit
         )
         
-        # In run_optimization, observable is returned. 
-        # We assume observable is normalized [0, 1]
-        return result['observable'][0]
+        # Observable is the success probability (fidelity)
+        fidelity = result['observable'][0]
+        return fidelity
 
     def _evaluate_stability(self, system: Any, params: Dict[str, Any]) -> float:
         """

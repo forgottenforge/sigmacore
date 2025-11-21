@@ -46,6 +46,11 @@ class QuantumAdapter(SigmaCAdapter):
             warnings.warn("Amazon Braket SDK not found. QuantumAdapter will not function correctly.")
         
         self.device_name = self.config.get('device', 'simulator')
+        
+        # Hardware-aware compilation settings (must be before _connect_device)
+        self.auto_compile = self.config.get('auto_compile', False)
+        self.target_hardware = self.config.get('target_hardware', 'auto')
+        
         if _HAS_BRAKET:
             self._connect_device()
         
@@ -53,10 +58,20 @@ class QuantumAdapter(SigmaCAdapter):
         if self.device_name == 'rigetti':
             try:
                 self.device = AwsDevice("arn:aws:braket:us-west-1::device/qpu/rigetti/Ankaa-3")
+                self.target_hardware = 'rigetti' if self.target_hardware == 'auto' else self.target_hardware
             except Exception:
                 self.device = LocalSimulator("braket_dm")
+        elif self.device_name == 'iqm':
+            # IQM devices would be connected here
+            self.device = LocalSimulator("braket_dm")
+            self.target_hardware = 'iqm' if self.target_hardware == 'auto' else self.target_hardware
+        elif self.device_name == 'ibm':
+            # IBM devices would be connected here
+            self.device = LocalSimulator("braket_dm")
+            self.target_hardware = 'ibm' if self.target_hardware == 'auto' else self.target_hardware
         else:
             self.device = LocalSimulator("braket_dm")
+            self.target_hardware = 'simulator' if self.target_hardware == 'auto' else self.target_hardware
             
     def get_observable(self, data: Dict[str, int], **kwargs) -> float:
         """
@@ -131,10 +146,63 @@ class QuantumAdapter(SigmaCAdapter):
         circuit.rx(q, np.pi/2)
         circuit.ry(q, theta)
         circuit.rx(q, -np.pi/2)
+    
+    def _detect_device_type(self) -> str:
+        """Detect the type of quantum device being used."""
+        if hasattr(self, 'target_hardware'):
+            return self.target_hardware
+        return 'simulator'
+    
+    def compile_for_hardware(self, circuit: Circuit, target_device: str = 'auto') -> Circuit:
+        """
+        Compile circuit for specific quantum hardware.
+        
+        Args:
+            circuit: Input circuit
+            target_device: 'rigetti', 'iqm', 'ibm', 'simulator', or 'auto'
+        
+        Returns:
+            Optimized circuit for target hardware
+        """
+        if not _HAS_BRAKET:
+            return circuit
+            
+        if target_device == 'auto':
+            target_device = self._detect_device_type()
+        
+        # CZ is native on Rigetti and IQM - already optimal
+        if target_device in ['rigetti', 'iqm', 'simulator']:
+            return circuit
+        
+        # For IBM, we could decompose CZ to CNOT if needed
+        # (Currently not implemented as CZ is supported in Braket)
+        elif target_device == 'ibm':
+            # Future: Add CZ → CNOT decomposition
+            # For now, return as-is (Braket handles transpilation)
+            return circuit
+        
+        return circuit
 
     # ========== Circuit Builders ==========
     def create_grover_with_noise(self, n_qubits: int = 2, epsilon: float = 0.0,
                                  idle_frac: float = 0.0, batch_seed: int = 0, **kwargs) -> Circuit:
+        """
+        Create Grover's algorithm circuit with configurable noise.
+        
+        Hardware Compatibility:
+        - Uses CZ gates (native on Rigetti Ankaa-3, IQM Radiance/Crystal/Garnet)
+        - Optimal for most modern quantum hardware
+        - See HARDWARE_COMPATIBILITY.md for platform-specific details
+        
+        Args:
+            n_qubits: Number of qubits (default: 2)
+            epsilon: Gate error rate (0.0 = ideal)
+            idle_frac: Idle time fraction (0.0 = no idle)
+            batch_seed: Random seed for noise
+            
+        Returns:
+            Braket Circuit object
+        """
         circuit = Circuit()
         if not _HAS_BRAKET: return circuit
         
@@ -159,10 +227,9 @@ class QuantumAdapter(SigmaCAdapter):
             circuit = self.add_physical_noise_layer(circuit, eff(epsilon), layer_idx)
             layer_idx += 1
         
-        # Oracle
-        circuit.cnot(0, 1)
-        self._rz_physical(circuit, 1, np.pi)
-        circuit.cnot(0, 1)
+        # Oracle (mark |11> state for 2-qubit Grover)
+        # Oracle: flip phase of |11>
+        circuit.cz(0, 1)  # Controlled-Z is simpler and correct for phase oracle
         circuit = self.add_physical_noise_layer(circuit, eff(epsilon), layer_idx)
         layer_idx += 1
         
@@ -172,14 +239,12 @@ class QuantumAdapter(SigmaCAdapter):
             circuit = self.add_physical_noise_layer(circuit, eff(epsilon), layer_idx)
             layer_idx += 1
         
-        # Diffusion
+        # Diffusion operator (inversion about average)
         for i in range(n_qubits):
             circuit.h(i)
         for i in range(n_qubits):
             circuit.x(i)
-        circuit.cnot(0, 1)
-        self._rz_physical(circuit, 1, np.pi)
-        circuit.cnot(0, 1)
+        circuit.cz(0, 1)  # Multi-controlled Z
         for i in range(n_qubits):
             circuit.x(i)
         for i in range(n_qubits):
@@ -249,8 +314,22 @@ class QuantumAdapter(SigmaCAdapter):
             else:
                 # Simulated result for testing without Braket
                 # Simulate degradation with epsilon
-                # Base success rate 0.9, degrades with eps
-                success_prob = max(0.1, 0.9 - 2.0 * eps) 
+                # For Grover's algorithm with 2 qubits, theoretical success prob is ~1.0 for perfect circuit
+                # We model degradation: success_prob = base * exp(-degradation_rate * eps)
+                
+                if circuit_type == 'grover' or circuit_type == 'custom':
+                    # Base success probability for ideal Grover circuit
+                    base_success = 0.95  # High fidelity for 2-qubit Grover
+                    degradation_rate = 8.0  # How fast it degrades with noise
+                    success_prob = base_success * np.exp(-degradation_rate * eps)
+                    success_prob = max(0.05, min(0.95, success_prob))  # Clamp to realistic range
+                else:
+                    # QAOA or other
+                    base_success = 0.7
+                    degradation_rate = 5.0
+                    success_prob = base_success * np.exp(-degradation_rate * eps)
+                    success_prob = max(0.1, min(0.9, success_prob))
+                
                 n_shots = kwargs.get('shots', 100)
                 n_success = int(n_shots * success_prob)
                 n_fail = n_shots - n_success

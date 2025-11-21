@@ -47,13 +47,51 @@ class RigorousFinancialSigmaC(RigorousTheoreticalCheck):
     def check_scaling_laws(self, data: Any, param_range: List[float], **kwargs) -> Dict[str, Any]:
         """
         Check Stylized Facts: Fat tails, volatility clustering.
+        Simple check for power-law tail behavior.
         """
-        # Placeholder
-        return {'status': 'not_implemented'}
+        if not param_range or len(param_range) < 2:
+            return {'status': 'insufficient_data'}
+        
+        returns = np.array(param_range)
+        
+        # Check for fat tails using kurtosis
+        kurtosis = np.mean((returns - np.mean(returns))**4) / (np.std(returns)**4)
+        has_fat_tails = kurtosis > 3.0  # Normal distribution has kurtosis = 3
+        
+        # Simple volatility clustering check: autocorrelation of squared returns
+        if len(returns) > 10:
+            squared_returns = returns**2
+            mean_sq = np.mean(squared_returns)
+            autocorr = np.corrcoef(squared_returns[:-1], squared_returns[1:])[0, 1]
+            has_clustering = autocorr > 0.1
+        else:
+            has_clustering = False
+        
+        return {
+            'status': 'completed',
+            'kurtosis': float(kurtosis),
+            'has_fat_tails': has_fat_tails,
+            'has_volatility_clustering': has_clustering,
+            'theory': 'Stylized Facts of Financial Returns'
+        }
 
     def quantify_resource(self, data: Any) -> float:
         """
-        Quantify Market Efficiency (Entropy).
+        Quantify Market Efficiency using Shannon Entropy of returns.
+        Higher entropy = more efficient/random market.
         """
-        # Placeholder
-        return 0.0
+        returns = data.get('returns', [])
+        if len(returns) < 2:
+            return 0.0
+        
+        # Discretize returns into bins for entropy calculation
+        hist, _ = np.histogram(returns, bins=20, density=True)
+        hist = hist[hist > 0]  # Remove zero bins
+        
+        # Shannon entropy
+        entropy = -np.sum(hist * np.log(hist + 1e-10))
+        
+        # Normalize to [0, 1] range (log(20) is max for 20 bins)
+        normalized_entropy = entropy / np.log(20)
+        
+        return float(normalized_entropy)
