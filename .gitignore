@@ -55,3 +55,17 @@ coverage.xml
 # Sigma-C specific
 *.log
 tmp/
+
+# Cache directories
+cache/
+cache_seis/
+era5_cache/
+
+# Test outputs
+tests/validation/outputs/*.txt
+
+# Compiled binaries (platform-specific)
+*.pyd
+*.so
+*.dylib
+sigma_c_core.*.pyd
