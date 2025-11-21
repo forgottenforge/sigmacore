@@ -1,5 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/sigma-c-framework.svg)](https://badge.fury.io/py/sigma-c-framework)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Commercial License](https://img.shields.io/badge/License-Commercial-green.svg)](https://github.com/forgottenforge/sigmacore/blob/main/license_COMMERCIAL.txt)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 # Sigma-C Framework v1.0.0
