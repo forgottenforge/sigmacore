@@ -32,7 +32,7 @@ ext_modules = [
 
 setup(
     name="sigma_c_framework",
-    version="1.0.0",
+    version="1.2.0",
     packages=find_packages(),
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
@@ -45,6 +45,8 @@ setup(
         "seaborn",
         "requests",
         "yfinance",
+        "pynvml",
+        "scikit-learn",
     ],
     zip_safe=False,
 )

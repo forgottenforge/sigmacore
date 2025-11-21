@@ -58,6 +58,12 @@ output_fin/
 *_results/
 verify_output*.txt
 
+# Internal Verification Scripts
+verify_*.py
+test_*.py
+validate_*.py
+
+
 # Build artifacts
 *.o
 *.obj

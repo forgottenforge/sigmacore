@@ -1,6 +1,6 @@
 # Sigma-C Framework Documentation / Dokumentation
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Date:** November 2025  
 **Copyright:** (c) 2025 ForgottenForge.xyz
 

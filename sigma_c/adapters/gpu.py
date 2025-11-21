@@ -347,3 +347,48 @@ Interpretation:
             explanation += "- SHARP degradation: Consider memory optimization\n"
             
         return explanation
+
+    # ========================================================================
+    # v1.2.0: Universal Rigor Integration
+    # ========================================================================
+
+    def optimize_kernel(self, 
+                       param_space: Dict[str, List[Any]],
+                       strategy: str = 'brute_force') -> Dict[str, Any]:
+        """
+        Optimize a GPU kernel using the BalancedGPUOptimizer.
+        
+        Args:
+            param_space: Dictionary of parameter names and values to sweep.
+            strategy: Optimization strategy ('brute_force').
+            
+        Returns:
+            OptimizationResult as a dictionary.
+        """
+        from ..optimization.gpu import BalancedGPUOptimizer
+        
+        optimizer = BalancedGPUOptimizer(self)
+        result = optimizer.optimize_kernel(param_space, strategy)
+        
+        return {
+            'optimal_params': result.optimal_params,
+            'score': result.score,
+            'sigma_c_before': result.sigma_c_before,
+            'sigma_c_after': result.sigma_c_after,
+            'performance_improvement': result.performance_after - result.performance_before
+        }
+
+    def validate_rigorously(self, sigma_c_value: float, arithmetic_intensity: float) -> Dict[str, Any]:
+        """
+        Validate a sigma_c result against rigorous GPU bounds (Roofline).
+        """
+        from ..physics.gpu import RigorousGPUSigmaC
+        
+        checker = RigorousGPUSigmaC()
+        context = {
+            'arithmetic_intensity': arithmetic_intensity,
+            'peak_flops': 1000.0, # Placeholder, should be detected
+            'peak_bandwidth': 500.0
+        }
+        
+        return checker.validate_sigma_c(sigma_c_value, context)
