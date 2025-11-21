@@ -122,6 +122,6 @@ spec:
 ## 🛡️ License
 
 **Open Source**: AGPL-3.0-or-later  
-**Commercial**: Contact [info@forgottenforge.xyz](mailto:info@forgottenforge.xyz)
+**Commercial**: Contact [nfo@forgottenforge.xyz](mailto:nfo@forgottenforge.xyz)
 
 Copyright © 2025 ForgottenForge.xyz
