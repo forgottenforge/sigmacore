@@ -4,7 +4,7 @@ Rigorous GPU Sigma_c
 Validates GPU sigma_c values against Roofline Model and Little's Law.
 Includes real-time hardware monitoring and spectral analysis.
 
-Copyright (c) 2024 ForgottenForge.xyz. All rights reserved.
+Copyright (c) 2025 ForgottenForge.xyz. All rights reserved.
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 

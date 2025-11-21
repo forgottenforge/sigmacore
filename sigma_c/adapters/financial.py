@@ -206,3 +206,138 @@ class FinancialAdapter(SigmaCAdapter):
         }
         
         return checker.validate_sigma_c(sigma_c_value, context)
+
+    # ========== v2.0: Rigorous Physics Implementation ==========
+
+    def compute_hurst_exponent(self, time_series: np.ndarray) -> Dict[str, float]:
+        """
+        Computes the Hurst Exponent (H) to classify market regime.
+        H < 0.5: Mean-reverting (Anti-persistent)
+        H = 0.5: Random Walk (Brownian Motion)
+        H > 0.5: Trending (Persistent)
+        
+        Uses R/S (Rescaled Range) Analysis.
+        """
+        ts = np.array(time_series)
+        if len(ts) < 100:
+            return {'hurst': 0.5, 'regime': 'insufficient_data'}
+            
+        # Create sub-series of different lengths
+        min_chunk = 10
+        max_chunk = len(ts) // 2
+        scales = np.unique(np.logspace(np.log10(min_chunk), np.log10(max_chunk), 10).astype(int))
+        
+        rs_values = []
+        for n in scales:
+            # Split into chunks of size n
+            n_chunks = len(ts) // n
+            chunk_rs = []
+            for i in range(n_chunks):
+                chunk = ts[i*n : (i+1)*n]
+                mean = np.mean(chunk)
+                # Cumulative deviation
+                y = np.cumsum(chunk - mean)
+                # Range
+                r = np.max(y) - np.min(y)
+                # Standard deviation
+                s = np.std(chunk)
+                if s == 0: s = 1e-9
+                chunk_rs.append(r / s)
+            rs_values.append(np.mean(chunk_rs))
+            
+        # Log-log fit: log(R/S) ~ H * log(n)
+        log_n = np.log(scales)
+        log_rs = np.log(rs_values)
+        hurst, intercept = np.polyfit(log_n, log_rs, 1)
+        
+        regime = 'random_walk'
+        if hurst < 0.45: regime = 'mean_reverting'
+        elif hurst > 0.55: regime = 'trending'
+        
+        return {
+            'hurst': hurst,
+            'regime': regime,
+            'confidence': float(1.0 - abs(hurst - 0.5)) # Heuristic confidence
+        }
+
+    def analyze_volatility_clustering(self, returns: np.ndarray) -> Dict[str, float]:
+        """
+        Analyzes volatility clustering using a GARCH(1,1) model.
+        sigma_t^2 = omega + alpha * epsilon_{t-1}^2 + beta * sigma_{t-1}^2
+        
+        High alpha+beta -> High persistence (clustering).
+        """
+        from scipy.optimize import minimize
+        
+        # Simple GARCH(1,1) Likelihood
+        def garch_likelihood(params, rets):
+            omega, alpha, beta = params
+            n = len(rets)
+            sigma2 = np.zeros(n)
+            sigma2[0] = np.var(rets)
+            
+            log_lik = 0
+            for t in range(1, n):
+                sigma2[t] = omega + alpha * rets[t-1]**2 + beta * sigma2[t-1]
+                if sigma2[t] <= 0: return 1e10 # Penalty
+                log_lik += -0.5 * (np.log(sigma2[t]) + rets[t]**2 / sigma2[t])
+                
+            return -log_lik
+
+        # Fit parameters
+        initial_guess = [np.var(returns)*0.01, 0.1, 0.8]
+        bounds = ((1e-6, None), (0, 1), (0, 1))
+        
+        try:
+            res = minimize(garch_likelihood, initial_guess, args=(returns,), 
+                          bounds=bounds, method='L-BFGS-B')
+            omega, alpha, beta = res.x
+            persistence = alpha + beta
+        except:
+            omega, alpha, beta, persistence = 0, 0, 0, 0
+            
+        # Sigma_c in this context relates to the persistence of volatility shocks
+        # As persistence -> 1, shocks last forever (criticality)
+        sigma_c_garch = 1.0 / (1.0 + (1.0 - persistence)) # Maps 1->1, 0->0.5
+        
+        return {
+            'omega': omega,
+            'alpha': alpha,
+            'beta': beta,
+            'persistence': persistence,
+            'sigma_c': sigma_c_garch
+        }
+
+    def analyze_order_flow(self, imbalance_series: np.ndarray) -> Dict[str, float]:
+        """
+        Analyzes Order Flow Imbalance (OFI) for liquidity crashes.
+        OFI = Buy_Volume - Sell_Volume at best bid/ask.
+        
+        Criticality occurs when OFI cumulative sum diverges (liquidity collapse).
+        """
+        # Cumulative OFI
+        cofi = np.cumsum(imbalance_series)
+        
+        # Detect structural breaks in OFI trend
+        # We look for super-diffusive behavior: <x^2> ~ t^gamma with gamma > 1
+        
+        lags = np.unique(np.logspace(0.5, np.log10(len(cofi)//4), 10).astype(int))
+        msd = [] # Mean Squared Displacement
+        
+        for tau in lags:
+            diffs = cofi[tau:] - cofi[:-tau]
+            msd.append(np.mean(diffs**2))
+            
+        log_tau = np.log(lags)
+        log_msd = np.log(msd)
+        gamma, _ = np.polyfit(log_tau, log_msd, 1)
+        
+        # gamma = 1: Normal diffusion
+        # gamma > 1: Super-diffusion (Trend/Crash)
+        # gamma = 2: Ballistic
+        
+        return {
+            'diffusion_exponent': gamma,
+            'crash_risk': 'high' if gamma > 1.5 else 'low',
+            'sigma_c_flow': min(1.0, max(0.0, (gamma - 1.0))) # 1 -> 0, 2 -> 1
+        }

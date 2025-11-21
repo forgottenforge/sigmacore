@@ -1,102 +1,127 @@
-# Sigma-C Framework v1.2.3 "Universal Optimization"
+# Sigma-C Framework v2.0.0 "Rigorous Control"
 
-The Universal Optimization Framework for Quantum, GPU, Financial, and ML Systems.
+Universal Criticality Analysis & Active Control System
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-1.2.3-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
 ## 🚀 Overview
 
-Sigma-C is a unified framework for optimizing complex systems by balancing **Performance** (Efficiency/Returns/Accuracy) against **Stability** (Resilience/Sigma_c).
+Sigma-C v2.0 is a rigorous active control system that detects, analyzes, and maintains critical points across quantum, GPU, financial, climate, and ML systems.
 
-It provides a consistent API to optimize:
-- **Quantum Circuits**: Maximize fidelity while minimizing noise susceptibility
-- **GPU Kernels**: Maximize throughput while maintaining thermal/memory stability
-- **Financial Strategies**: Maximize returns while minimizing crash risk (sigma_c)
-- **ML Models**: Maximize accuracy while ensuring adversarial robustness
+**New in v2.0**: **22+ Framework Integrations** - Connect to Qiskit, PyTorch, Kubernetes, Grafana, and more!
 
-## ✨ New in v1.2.3
+## ✨ What's New in v2.0
 
-- **Machine Learning Optimizer**: Optimize neural networks for robustness (`BalancedMLOptimizer`)
-- **Hardware-Aware Quantum**: Native gate optimization for Rigetti, IQM, and IBM
-- **Enhanced Physics**: Holevo bound, Roofline model, and No-Cloning theorem validation
-- **Extended Documentation**: Comprehensive guides for hardware and domain extensions
+### Core Features
+- **Observable Discovery**: Automatic identification of optimal order parameters
+- **Multi-Scale Analysis**: Wavelet-based criticality detection across scales
+- **Active Control**: PID controller for critical point maintenance
+- **Streaming Calculation**: O(1) real-time susceptibility updates
+
+### New Domains
+- **Climate**: Mesoscale boundary detection
+- **Seismic**: Gutenberg-Richter analysis
+- **Magnetic**: Critical exponents validation
+- **Edge Computing**: Power efficiency optimization
+- **LLM Cost**: Model selection via Pareto frontier
+
+### 🔌 Universal Connectivity
+- **Quantum**: Qiskit, PennyLane, Cirq, AWS Braket
+- **ML**: PyTorch, JAX, TensorFlow
+- **Finance**: QuantLib, Zipline
+- **DevOps**: Kubernetes, GitHub Actions, Grafana
+- **Web**: REST API, GraphQL, WebAssembly
 
 ## 📦 Installation
 
 ```bash
+# Core framework
 pip install sigma-c-framework
-```
 
-Or from source:
-```bash
-git clone https://github.com/forgottenforge/sigma-c-framework.git
-cd sigma-c-framework
-pip install -e .
+# With all integrations
+pip install sigma-c-framework[all]
+
+# Specific integrations
+pip install sigma-c-framework[quantum]   # Qiskit, PennyLane
+pip install sigma-c-framework[ml]        # PyTorch, JAX
+pip install sigma-c-framework[devops]    # K8s, Grafana
 ```
 
 ## 🔧 Quick Start
 
-### 1. Quantum Optimization
+### Quantum (Qiskit)
 ```python
-from sigma_c.adapters.quantum import QuantumAdapter
-from sigma_c.optimization.quantum import BalancedQuantumOptimizer
+from qiskit import QuantumCircuit
+from sigma_c.connectors.qiskit import QiskitSigmaC
 
-# Initialize with hardware-aware compilation
-adapter = QuantumAdapter(config={'device': 'rigetti', 'auto_compile': True})
-optimizer = BalancedQuantumOptimizer(adapter)
+circuit = QuantumCircuit(3)
+circuit.h(0)
+circuit.cx(0, 1)
 
-# Optimize Grover's Algorithm
-result = optimizer.optimize_circuit(
-    circuit_factory=my_grover_circuit,
-    param_space={'epsilon': [0.0, 0.01], 'idle_frac': [0.0, 0.1]}
-)
-print(f"Optimal Params: {result.optimal_params}")
+# Automatic criticality analysis
+result = QiskitSigmaC.analyze(circuit)
+print(f"σ_c = {result['sigma_c']:.4f}")
 ```
 
-### 2. ML Optimization (New!)
+### Machine Learning (PyTorch)
 ```python
-from sigma_c.optimization.ml import BalancedMLOptimizer
+from sigma_c.ml.pytorch import CriticalModule, SigmaCLoss
 
-optimizer = BalancedMLOptimizer(performance_weight=0.7, stability_weight=0.3)
+class MyNet(CriticalModule):
+    def forward(self, x):
+        return self.critical_forward(x)  # Auto σ_c tracking
 
-# Optimize Neural Network Hyperparameters
-result = optimizer.optimize_model(
-    model_factory=create_model,
-    param_space={
-        'learning_rate': [0.001, 0.01],
-        'dropout': [0.1, 0.2, 0.3]
-    }
-)
-print(f"Robust Accuracy: {result.score}")
+criterion = SigmaCLoss(lambda_critical=0.1)
 ```
 
-### 3. Financial Optimization
+### Universal Bridge (Any Framework!)
 ```python
-from sigma_c.adapters.financial import FinancialAdapter
-from sigma_c.optimization.financial import BalancedFinancialOptimizer
+from sigma_c.connectors.bridge import SigmaCBridge
 
-adapter = FinancialAdapter()
-optimizer = BalancedFinancialOptimizer(adapter)
+@SigmaCBridge.wrap_any_function
+def my_function(x):
+    return x ** 2
 
-# Optimize Trading Strategy
-result = optimizer.optimize_strategy(
-    param_space={'lookback': [60, 126, 252], 'threshold': [0.01, 0.02]}
-)
-print(f"Stable Returns: {result.performance_after}")
+result = my_function(5)
+print(result.__sigma_c__)  # Criticality metadata
+```
+
+### DevOps (Kubernetes)
+```yaml
+apiVersion: sigma-c.io/v1
+kind: CriticalityMonitor
+metadata:
+  name: app-monitor
+spec:
+  target:
+    app: my-app
+  thresholds:
+    cpu: 0.8
+  actions:
+    scale: true
 ```
 
 ## 📚 Documentation
 
-- [Full Documentation](DOCUMENTATION.md)
-- [Hardware Compatibility](HARDWARE_COMPATIBILITY.md)
-- [Extending Domains](EXTENDING_DOMAINS.md)
-- [Release Notes](RELEASE_NOTES_v1.2.3.md)
+- **[Integrations Guide](INTEGRATIONS.md)** - All 22+ integrations
+- **[API Reference](API_REFERENCE_v2.0.md)** - Complete API docs
+- **[Release Notes](RELEASE_NOTES_v2.0.0.md)** - What's new in v2.0
+- **[Examples](examples_v2.0/)** - Code examples
+
+## 🎯 Use Cases
+
+- **Quantum Computing**: Optimize circuits for NISQ devices
+- **GPU/HPC**: Detect cache transitions, thermal throttling
+- **Finance**: Predict market crashes, optimize portfolios
+- **ML**: Train robust models, detect overfitting
+- **Climate**: Identify mesoscale boundaries
+- **Edge/IoT**: Optimize power efficiency
 
 ## 🛡️ License
 
 **Open Source**: AGPL-3.0-or-later  
-**Commercial**: Contact [info@forgottenforge.xyz](mailto:info@forgottenforge.xyz) for commercial licensing options.
+**Commercial**: Contact [info@forgottenforge.xyz](mailto:info@forgottenforge.xyz)
 
 Copyright © 2025 ForgottenForge.xyz
