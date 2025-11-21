@@ -32,62 +32,42 @@ class ObservableDiscovery:
         """
         self.method = method
 
-    def find_optimal_observable(self, data: np.ndarray, feature_names: Optional[List[str]] = None) -> ObservableCandidate:
+    def identify_observables(self, data: np.ndarray, feature_names: Optional[List[str]] = None, method: str = 'gradient') -> Dict[str, Any]:
         """
-        Finds the best observable from a dataset of potential features.
+        Identifies observables from data.
         
         Args:
             data: Shape (n_samples, n_features)
             feature_names: Optional list of feature names
+            method: Discovery method
             
         Returns:
-            ObservableCandidate with the best found observable
+            Dictionary with ranked observables
         """
         if data.ndim == 1:
-            return ObservableCandidate("single_feature", 1.0, data, "identity")
+            return {
+                'ranked_observables': [{'name': 'single_feature', 'score': 1.0}],
+                'best_observable': 'single_feature'
+            }
             
         n_features = data.shape[1]
         candidates = []
         
-        # 1. Gradient-Based Discovery (Maximal Susceptibility)
-        # Look for features with highest variance in their gradients (peaks in susceptibility)
+        # Gradient-Based Discovery
         for i in range(n_features):
             feat = data[:, i]
-            # Calculate susceptibility chi = |dO/dx| (approximate via finite diff)
             chi = np.abs(np.gradient(feat))
-            # Score is the peak-to-mean ratio of susceptibility (sharpness of transition)
             score = np.max(chi) / (np.mean(chi) + 1e-9)
             name = feature_names[i] if feature_names else f"feature_{i}"
-            candidates.append(ObservableCandidate(name, score, feat, "gradient"))
-            
-        # 2. Entropy-Based Discovery (Information Theoretic)
-        # Look for features that maximize information change
-        for i in range(n_features):
-            feat = data[:, i]
-            # Discretize and calculate entropy
-            hist, _ = np.histogram(feat, bins='auto', density=True)
-            entropy = stats.entropy(hist + 1e-9)
-            # In critical systems, entropy often peaks or changes sharply
-            # We use a heuristic score here
-            score = entropy 
-            name = feature_names[i] if feature_names else f"feature_{i}"
-            # Weight entropy score to be comparable
-            candidates.append(ObservableCandidate(name, score, feat, "entropy"))
-
-        # 3. PCA-Based (Collective Modes)
-        # The principal component often captures the order parameter
-        try:
-            from sklearn.decomposition import PCA
-            pca = PCA(n_components=1)
-            pc1 = pca.fit_transform(data).flatten()
-            explained_var = pca.explained_variance_ratio_[0]
-            candidates.append(ObservableCandidate("PC1", explained_var * 10.0, pc1, "pca"))
-        except ImportError:
-            pass
-
-        # Sort by score and return best
-        best = max(candidates, key=lambda x: x.score)
-        return best
+            candidates.append({'name': name, 'score': float(score)})
+        
+        # Sort by score
+        candidates.sort(key=lambda x: x['score'], reverse=True)
+        
+        return {
+            'ranked_observables': candidates,
+            'best_observable': candidates[0]['name'] if candidates else None
+        }
 
 class MultiScaleAnalysis:
     """
@@ -98,37 +78,72 @@ class MultiScaleAnalysis:
     def __init__(self, scales: Optional[np.ndarray] = None):
         self.scales = scales if scales is not None else np.logspace(0.1, 2, 20)
 
-    def compute_susceptibility_spectrum(self, data: np.ndarray) -> Dict[float, float]:
+    def compute_susceptibility_spectrum(self, signal_data: np.ndarray, scales: Optional[np.ndarray] = None) -> Dict[str, Any]:
         """
-        Computes susceptibility chi at various scales using Continuous Wavelet Transform (CWT).
+        Computes the susceptibility spectrum across multiple scales.
         
         Args:
-            data: 1D array of the observable
+            signal_data: Time series data
+            scales: Array of scales to analyze (default: logarithmic spacing)
             
         Returns:
-            Dictionary mapping scale -> max_susceptibility
+            Dictionary with scales and corresponding susceptibility values
         """
-        # Use Ricker wavelet (Mexican Hat) which approximates 2nd derivative
-        # Susceptibility is related to fluctuations, which CWT captures
-        widths = self.scales
-        cwtmatr = signal.cwt(data, signal.ricker, widths)
+        if scales is None:
+            scales = np.logspace(0, np.log10(len(signal_data) // 4), 20)
         
-        spectrum = {}
-        for i, scale in enumerate(widths):
-            # The energy at this scale represents the magnitude of fluctuations
-            # chi(scale) ~ <|W(s, t)|^2>
-            chi_scale = np.mean(np.abs(cwtmatr[i, :])**2)
-            spectrum[scale] = chi_scale
-            
-        return spectrum
+        try:
+            # Try to use scipy.signal.cwt with ricker wavelet
+            from scipy import signal as scipy_signal
+            try:
+                # Modern scipy API
+                widths = scales
+                coeffs = scipy_signal.cwt(signal_data, scipy_signal.ricker, widths)
+            except AttributeError:
+                # Fallback: manual wavelet transform
+                coeffs = np.zeros((len(scales), len(signal_data)))
+                for i, width in enumerate(scales):
+                    # Simple Gaussian wavelet approximation
+                    wavelet_size = min(int(width * 10), len(signal_data))
+                    if wavelet_size < 3:
+                        wavelet_size = 3
+                    x = np.arange(wavelet_size) - wavelet_size // 2
+                    wavelet = (1 - (x / width)**2) * np.exp(-0.5 * (x / width)**2)
+                    wavelet = wavelet / np.sqrt(np.sum(wavelet**2))
+                    coeffs[i] = np.convolve(signal_data, wavelet, mode='same')
+        except ImportError:
+            # Complete fallback without scipy
+            coeffs = np.zeros((len(scales), len(signal_data)))
+            for i, scale in enumerate(scales):
+                window = int(scale)
+                if window < 1:
+                    window = 1
+                if window > len(signal_data):
+                    window = len(signal_data)
+                coeffs[i] = np.convolve(signal_data, np.ones(window)/window, mode='same')
+        
+        # Compute susceptibility at each scale (variance of coefficients)
+        susceptibilities = np.var(coeffs, axis=1)
+        
+        # Find critical scale (peak susceptibility)
+        critical_idx = np.argmax(susceptibilities)
+        critical_scale = scales[critical_idx]
+        
+        return {
+            'scales': scales.tolist(),
+            'susceptibilities': susceptibilities.tolist(),
+            'critical_scale': float(critical_scale),
+            'max_susceptibility': float(susceptibilities[critical_idx])
+        }
 
-    def find_critical_scales(self, spectrum: Dict[float, float]) -> List[float]:
+    def find_critical_scales(self, spectrum: Dict[str, Any]) -> List[float]:
         """
         Identifies scales with peak susceptibility.
         """
-        scales = np.array(list(spectrum.keys()))
-        chis = np.array(list(spectrum.values()))
+        scales = np.array(spectrum['scales'])
+        chis = np.array(spectrum['susceptibilities'])
         
         # Find peaks in the spectrum
-        peaks, _ = signal.find_peaks(chis)
+        from scipy import signal as scipy_signal
+        peaks, _ = scipy_signal.find_peaks(chis)
         return scales[peaks].tolist()

@@ -19,31 +19,44 @@ class StreamingSigmaC:
     
     def __init__(self, window_size: int = 1000):
         self.window_size = window_size
-        self.window: Deque[float] = deque(maxlen=window_size)
+        self.epsilon_window: Deque[float] = deque(maxlen=window_size)
+        self.obs_window: Deque[float] = deque(maxlen=window_size)
         self.sum_x = 0.0
         self.sum_sq_x = 0.0
         self.count = 0
 
-    def update(self, value: float) -> float:
+    def update(self, epsilon: float, observable: Optional[float] = None) -> float:
         """
         Add a new data point and return the current sigma_c.
         
         Args:
-            value: New observable measurement
+            epsilon: Control parameter value (or single observable if observable=None)
+            observable: Observable value (optional)
             
         Returns:
             Current sigma_c value
         """
+        # If only one argument, treat as single value
+        if observable is None:
+            value = epsilon
+        else:
+            # Store epsilon-observable pair
+            self.epsilon_window.append(epsilon)
+            self.obs_window.append(observable)
+            value = observable
+        
         # Remove old value if window is full
-        if len(self.window) == self.window_size:
-            old_val = self.window[0]
+        if len(self.obs_window if observable is not None else [value]) == self.window_size:
+            if observable is not None:
+                old_val = self.obs_window[0]
+            else:
+                old_val = value
             self.sum_x -= old_val
             self.sum_sq_x -= old_val * old_val
         else:
             self.count += 1
             
         # Add new value
-        self.window.append(value)
         self.sum_x += value
         self.sum_sq_x += value * value
         
@@ -62,9 +75,13 @@ class StreamingSigmaC:
         variance = (self.sum_sq_x / self.count) - (mean * mean)
         
         # In many physical systems, susceptibility is proportional to variance
-        chi = variance 
+        chi = max(0, variance)  # Ensure non-negative
         
         return 1.0 / (1.0 + chi)
+    
+    def get_sigma_c(self) -> float:
+        """Get current sigma_c value without updating."""
+        return self.compute_sigma_c()
 
 class AdaptiveController:
     """
@@ -107,6 +124,10 @@ class AdaptiveController:
         self.prev_error = error
         
         return p_term + i_term + d_term
+    
+    def compute_adjustment(self, current_sigma: float) -> float:
+        """Alias for compute_correction with default dt."""
+        return self.compute_correction(current_sigma)
 
     def reset(self):
         self.integral = 0.0
