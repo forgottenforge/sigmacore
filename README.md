@@ -3,7 +3,7 @@
 [![Commercial License](https://img.shields.io/badge/License-Commercial-green.svg)](https://github.com/forgottenforge/sigmacore/blob/main/license_COMMERCIAL.txt)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-# Sigma-C Framework v1.1.0
+# Sigma-C Framework v1.2.0
 
 **Copyright (c) 2025 ForgottenForge.xyz**
 
@@ -15,8 +15,8 @@
 # Install the package
 pip install sigma-c-framework
 
-# Run examples
-python -m sigma_c.examples.demo_quantum
+# Run the new v1.2.0 "Full Power" demo
+python -m sigma_c.examples_v1_2.demo_universal_rigor
 ```
 
 Or clone and install from source:
@@ -41,7 +41,9 @@ Sigma-C detects **critical phase transitions** in complex systems using Critical
 ## 📦 Features
 
 - **6 Domain Adapters** ready for production use
-- **🆕 Universal Diagnostics System (v1.1.0)** - Auto-search, validation, and recommendations
+- **🆕 Universal Optimization (v1.2.0)** - Balanced optimizers for Fidelity vs. Resilience
+- **🆕 Publication-Ready Reporting (v1.2.0)** - Automated LaTeX reports and Nature-style plots
+- **Universal Diagnostics System** - Auto-search, validation, and recommendations
 - **High-Performance C++ Core** with Python bindings
 - **Statistical Robustness** via bootstrap and permutation tests
 - **Comprehensive Documentation** in English and German
@@ -55,34 +57,36 @@ Sigma-C detects **critical phase transitions** in complex systems using Critical
 
 ## 💡 Example
 
-### Basic Usage (v1.0.0)
+### Universal Optimization (v1.2.0) 🆕
 ```python
-from sigma_c import Universe
+from sigma_c.optimization.quantum import BalancedQuantumOptimizer
+from sigma_c.adapters.quantum import QuantumAdapter
 
-# Detect GPU performance critical point
-gpu = Universe.gpu()
-result = gpu.auto_tune(alpha_levels=[0.1, 0.5, 0.9])
+# Initialize adapter and optimizer
+adapter = QuantumAdapter()
+optimizer = BalancedQuantumOptimizer(adapter)
 
-print(f"Critical threshold: {result['sigma_c']:.3f}\"")
-print(f"Stability score: {result['statistics']['kappa']:.2f}")
+# Optimize circuit parameters (balancing fidelity vs. noise resilience)
+result = optimizer.optimize_circuit(
+    circuit_factory=my_circuit_func,
+    param_space={'epsilon': [0.01, 0.05], 'idle_frac': [0.1, 0.2]}
+)
+
+print(f"Optimal Params: {result.optimal_params}")
+print(f"Critical Stability (Sigma-C): {result.sigma_c_after:.4f}")
 ```
 
-### With Diagnostics (v1.1.0) 🆕
+### Automated Reporting (v1.2.0) 🆕
 ```python
-from sigma_c import Universe
+from sigma_c.reporting.latex import LatexGenerator
 
-# Step 1: Diagnose your setup
-gpu = Universe.gpu()
-diag = gpu.diagnose()
-
-if diag['status'] == 'ok':
-    # Step 2: Auto-search optimal parameters
-    search = gpu.auto_search()
-    print(f"Optimal alpha: {search['best_params']['alpha']:.2f}")
-    
-    # Step 3: Get human-readable explanation
-    result = gpu.auto_tune(alpha_levels=[search['best_params']['alpha']])
-    print(gpu.explain(result))
+report = LatexGenerator()
+report.generate_report(
+    title="Criticality Analysis",
+    sections=[{'title': 'Results', 'content': 'System is stable.'}],
+    filename="analysis_report"
+)
+# Generates analysis_report.tex and compiles to PDF
 ```
 
 ## 📄 License

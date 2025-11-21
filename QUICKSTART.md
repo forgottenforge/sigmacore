@@ -1,6 +1,6 @@
 # Sigma-C Framework - Quick Start Guide
 
-**Version 1.0.0** | **Copyright (c) 2025 ForgottenForge.xyz**
+**Version 1.2.0** | **Copyright (c) 2025 ForgottenForge.xyz**
 
 ## For Developers: Getting Started in 5 Minutes
 
