@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma-C LLM Drift Demo - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #050505;
+            color: #ffffff;
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Subtle grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 60px 30px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px; /* Rounded corners kept */
+            backdrop-filter: blur(20px);
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-transform: none; /* Removed uppercase for cleaner look */
+        }
+        
+        h1 span {
+            background: linear-gradient(135deg, #ffffff 0%, #888888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #888888;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            margin-top: 10px;
+        }
+        
+        .key-insight {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 40px 0;
+            font-size: 1.2em;
+            font-weight: 400;
+            color: #e0e0e0;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-container {
+            background: rgba(15, 15, 15, 0.6);
+            padding: 30px;
+            border-radius: 20px; /* Rounded corners */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .chart-title {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-description {
+            color: #888888;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+        
+        .chart-description strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(15, 15, 15, 0.6);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(20, 20, 20, 0.8);
+        }
+        
+        .stat-label {
+            color: #666666;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 10px 0;
+            letter-spacing: -0.03em;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 15px;
+            letter-spacing: 0.02em;
+        }
+        
+        .status-stable {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        .status-collapsed {
+            background: #333333;
+            color: #ffffff;
+            border: 1px solid #555555;
+        }
+        
+        canvas {
+            max-height: 400px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            color: #444;
+            font-size: 0.9em;
+            padding-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>Sigma-C Framework</span></h1>
+            <div class="subtitle">LLM Model Drift Detection & Active Control - Live Demonstration</div>
+        </header>
+        
+        <div class="key-insight">
+            "Traditional monitoring tells you your system is dead. Sigma-C tells you it's dying — and gives you the tools to save it."
+        </div>
+        
+        <div id="content">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-title">📊 Sentiment Score (Performance Metric)</div>
+                    <div class="chart-description">
+                        <strong>What you see:</strong> This graph tracks the output quality (Sentiment) of both systems over time. The <span style="color:#ff4444">Red Line (Baseline)</span> shows the traditional system, the <span style="color:#44ff44">Green Line (Sigma-C)</span> the protected system. Note: Both appear stable until Minute 20+, when the baseline suddenly collapses, while Sigma-C remains stable.
+                    </div>
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">⚡ Sigma-C Score (Susceptibility)</div>
+                    <div class="chart-description">
+                        <strong>What you see:</strong> The <span style="color:#ffaa00">Orange Line</span> shows the Sigma-C score (System Susceptibility). When this drops below the <span style="color:#ff4444">Red Dashed Line (Threshold 0.7)</span>, the system is critical. <strong>Important:</strong> Sigma-C detects the problem at <strong>Minute 19</strong> — long before performance degrades! Low Sigma-C = High Instability = Early Warning.
+                    </div>
+                    <canvas id="sigmaCChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">🌡️ Temperature (Control Parameter)</div>
+                    <div class="chart-description">
+                        <strong>What you see:</strong> The <span style="color:#888888">Gray Line (Baseline)</span> remains constant at 0.8. The <span style="color:#44aaff">Blue Line (Sigma-C)</span> shows how the Active Control System automatically reduces temperature (0.8 → 0.12) as soon as Sigma-C triggers an alert. <strong>Effect:</strong> Lower temperature = more deterministic = more stable. This is the automatic rescue action!
+                    </div>
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">☢️ Input Toxicity (Attack Vector)</div>
+                    <div class="chart-description">
+                        <strong>What you see:</strong> The <span style="color:#cc44ff">Purple Line</span> shows the gradual increase in input toxicity (0.1 → 0.77). This simulates a "drift attack" — e.g., increasingly toxic/confusing user inputs or distribution shift. This is the stressor testing both systems.
+                    </div>
+                    <canvas id="toxicityChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Baseline Final Sentiment</div>
+                    <div class="stat-value" id="baselineSentiment">-</div>
+                    <div class="status-badge" id="baselineStatus">-</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Sigma-C Final Sentiment</div>
+                    <div class="stat-value" id="sigmacSentiment">-</div>
+                    <div class="status-badge" id="sigmacStatus">-</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Early Detection (Minutes Ahead)</div>
+                    <div class="stat-value" id="earlyDetection">-</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label">Final Temperature (Sigma-C)</div>
+                    <div class="stat-value" id="finalTemp">-</div>
+                </div>
+            </div>
+            
+            <footer>
+                &copy; 2025 ForgottenForge.xyz - Sigma-C Framework Demo
+            </footer>
+        </div>
+    </div>
+    
+    <script>
+        // Embedded data from simulation
+        const data = {
+  "baseline": [
+    {
+      "minute": 0,
+      "toxicity": 0.1,
+      "sentiment": 0.9532357076505616,
+      "avg_sentiment": 0.9532357076505616,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 1,
+      "toxicity": 0.1,
+      "sentiment": 0.9215627225847783,
+      "avg_sentiment": 0.93739921511767,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 2,
+      "toxicity": 0.1,
+      "sentiment": 0.8578660951319326,
+      "avg_sentiment": 0.9108881751224241,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 3,
+      "toxicity": 0.1,
+      "sentiment": 1.0,
+      "avg_sentiment": 0.9331661313418181,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 4,
+      "toxicity": 0.1,
+      "sentiment": 0.9012617682797266,
+      "avg_sentiment": 0.9267852587293998,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 5,
+      "toxicity": 0.1,
+      "sentiment": 0.8792755315609969,
+      "avg_sentiment": 0.9188669708679993,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 6,
+      "toxicity": 0.1,
+      "sentiment": 0.975941140725751,
+      "avg_sentiment": 0.927020423704821,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 7,
+      "toxicity": 0.1,
+      "sentiment": 1.0,
+      "avg_sentiment": 0.9361428707417183,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 8,
+      "toxicity": 0.1,
+      "sentiment": 0.8212735977107181,
+      "avg_sentiment": 0.9233796181827183,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 9,
+      "toxicity": 0.1,
+      "sentiment": 0.8733239451519987,
+      "avg_sentiment": 0.9183740508796463,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 10,
+      "toxicity": 0.1,
+      "sentiment": 0.8696035541085316,
+      "avg_sentiment": 0.9100108355254433,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 11,
+      "toxicity": 0.14,
+      "sentiment": 0.8261915017022993,
+      "avg_sentiment": 0.9004737134371954,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 12,
+      "toxicity": 0.18,
+      "sentiment": 0.8578312586341658,
+      "avg_sentiment": 0.9004702297874188,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 13,
+      "toxicity": 0.22,
+      "sentiment": 0.9574029887919663,
+      "avg_sentiment": 0.8962105286666153,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 14,
+      "toxicity": 0.26,
+      "sentiment": 0.8068905693606133,
+      "avg_sentiment": 0.886773408774704,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 15,
+      "toxicity": 0.30000000000000004,
+      "sentiment": 0.8777220648280989,
+      "avg_sentiment": 0.8866180621014144,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 16,
+      "toxicity": 0.33999999999999997,
+      "sentiment": 0.8928591228755778,
+      "avg_sentiment": 0.8783098603163969,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 17,
+      "toxicity": 0.38,
+      "sentiment": 0.7281261910006606,
+      "avg_sentiment": 0.8511224794164629,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 18,
+      "toxicity": 0.42000000000000004,
+      "sentiment": 0.5302459885376062,
+      "avg_sentiment": 0.8220197184991518,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 19,
+      "toxicity": 0.45999999999999996,
+      "sentiment": 0.5025785475477177,
+      "avg_sentiment": 0.7849451787387238,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 20,
+      "toxicity": 0.5,
+      "sentiment": 0.2430349775235034,
+      "avg_sentiment": 0.722288321080221,
+      "temperature": 0.8,
+      "alert": 0
+    },
+    {
+      "minute": 21,
+      "toxicity": 0.53,
+      "sentiment": 0.1639972990438186,
+      "avg_sentiment": 0.6560689008143729,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 22,
+      "toxicity": 0.56,
+      "sentiment": 0.10368306609581945,
+      "avg_sentiment": 0.5806540815605382,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 23,
+      "toxicity": 0.59,
+      "sentiment": 0.23083499733007967,
+      "avg_sentiment": 0.5079972824143495,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 24,
+      "toxicity": 0.62,
+      "sentiment": 0.15031464046072204,
+      "avg_sentiment": 0.4423396895243603,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 25,
+      "toxicity": 0.65,
+      "sentiment": 0.1176578811611333,
+      "avg_sentiment": 0.3663332711576639,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 26,
+      "toxicity": 0.6799999999999999,
+      "sentiment": 0.021023962134370314,
+      "avg_sentiment": 0.2791497550835431,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 27,
+      "toxicity": 0.71,
+      "sentiment": 0.07862960287752624,
+      "avg_sentiment": 0.21420009627122968,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 28,
+      "toxicity": 0.74,
+      "sentiment": 0.04726815555669539,
+      "avg_sentiment": 0.16590231297313857,
+      "temperature": 0.8,
+      "alert": 1
+    },
+    {
+      "minute": 29,
+      "toxicity": 0.77,
+      "sentiment": 0.0917732170975152,
+      "avg_sentiment": 0.12482177992811835,
+      "temperature": 0.8,
+      "alert": 1
+    }
+  ],
+  "sigma_c_protected": [
+    {
+      "minute": 0,
+      "toxicity": 0.1,
+      "sentiment": 0.9412699962672346,
+      "sigma_c": 1.0,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.07390498078357201
+    },
+    {
+      "minute": 1,
+      "toxicity": 0.1,
+      "sentiment": 0.8366542454411436,
+      "sigma_c": 0.999757919711385,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.10502660706957265
+    },
+    {
+      "minute": 2,
+      "toxicity": 0.1,
+      "sentiment": 0.8954522164933285,
+      "sigma_c": 0.9990463920230969,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.029725395184439913
+    },
+    {
+      "minute": 3,
+      "toxicity": 0.1,
+      "sentiment": 0.9323156815472158,
+      "sigma_c": 0.9992047621422551,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.048898726928687214
+    },
+    {
+      "minute": 4,
+      "toxicity": 0.1,
+      "sentiment": 0.9472934371080232,
+      "sigma_c": 0.9991657474964116,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.09958946464020722
+    },
+    {
+      "minute": 5,
+      "toxicity": 0.1,
+      "sentiment": 0.9368064744419107,
+      "sigma_c": 0.9992974279260882,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.06419156068106432
+    },
+    {
+      "minute": 6,
+      "toxicity": 0.1,
+      "sentiment": 0.8843014098232485,
+      "sigma_c": 0.9993630644150311,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.08706005837800983
+    },
+    {
+      "minute": 7,
+      "toxicity": 0.1,
+      "sentiment": 0.9601596050075096,
+      "sigma_c": 0.9990894624672831,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.1294943546542393
+    },
+    {
+      "minute": 8,
+      "toxicity": 0.1,
+      "sentiment": 0.9199552905458314,
+      "sigma_c": 0.9984822883630317,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.16451777056242003
+    },
+    {
+      "minute": 9,
+      "toxicity": 0.1,
+      "sentiment": 0.8453987267543753,
+      "sigma_c": 0.9981431596700007,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.1631143326894767
+    },
+    {
+      "minute": 10,
+      "toxicity": 0.1,
+      "sentiment": 1.0,
+      "sigma_c": 0.9964765847345811,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.24595389864010314
+    },
+    {
+      "minute": 11,
+      "toxicity": 0.14,
+      "sentiment": 1.0,
+      "sigma_c": 0.9955044534814358,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.2393088527651756
+    },
+    {
+      "minute": 12,
+      "toxicity": 0.18,
+      "sentiment": 0.8489525526820293,
+      "sigma_c": 0.9951328065975591,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.22177274797899954
+    },
+    {
+      "minute": 13,
+      "toxicity": 0.22,
+      "sentiment": 0.8692776367683687,
+      "sigma_c": 0.9932795956592951,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.31178284304310594
+    },
+    {
+      "minute": 14,
+      "toxicity": 0.26,
+      "sentiment": 0.8187807846755079,
+      "sigma_c": 0.9851580682845638,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.5167540671331142
+    },
+    {
+      "minute": 15,
+      "toxicity": 0.30000000000000004,
+      "sentiment": 0.8791662665463729,
+      "sigma_c": 0.9794140134407017,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.5097706374222833
+    },
+    {
+      "minute": 16,
+      "toxicity": 0.33999999999999997,
+      "sentiment": 0.7346475746608987,
+      "sigma_c": 0.9078376684080871,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 1.403234971614151
+    },
+    {
+      "minute": 17,
+      "toxicity": 0.38,
+      "sentiment": 0.6578536580214626,
+      "sigma_c": 0.842886715783578,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 1.5731267929273924
+    },
+    {
+      "minute": 18,
+      "toxicity": 0.42000000000000004,
+      "sentiment": 0.5883894763478582,
+      "sigma_c": 0.8378702936169258,
+      "temperature": 0.8,
+      "alert": 0,
+      "observable": 0.9150422040255313
+    },
+    {
+      "minute": 19,
+      "toxicity": 0.45999999999999996,
+      "sentiment": 0.5055052287512972,
+      "sigma_c": 0.698527496770174,
+      "temperature": 0.8,
+      "alert": 1,
+      "observable": 2.64711453187652
+    },
+    {
+      "minute": 20,
+      "toxicity": 0.5,
+      "sentiment": 0.4760041769632085,
+      "sigma_c": 0.6832254832079655,
+      "temperature": 0.7483828508397548,
+      "alert": 1,
+      "observable": 1.5545700066940782
+    },
+    {
+      "minute": 21,
+      "toxicity": 0.53,
+      "sentiment": 0.3651869868006805,
+      "sigma_c": 0.6291785199749833,
+      "temperature": 0.6967736752702802,
+      "alert": 1,
+      "observable": 2.368179235136072
+    },
+    {
+      "minute": 22,
+      "toxicity": 0.56,
+      "sentiment": 0.39097777941769396,
+      "sigma_c": 0.6393951204244376,
+      "temperature": 0.6515816505418183,
+      "alert": 1,
+      "observable": 0.6865881088415748
+    },
+    {
+      "minute": 23,
+      "toxicity": 0.59,
+      "sentiment": 0.312030517405694,
+      "sigma_c": 0.6429636123325143,
+      "temperature": 0.5974852296328392,
+      "alert": 1,
+      "observable": 1.2247902689303591
+    },
+    {
+      "minute": 24,
+      "toxicity": 0.62,
+      "sentiment": 0.4020943354869507,
+      "sigma_c": 0.6516665248006152,
+      "temperature": 0.5370895280197718,
+      "alert": 1,
+      "observable": 0.8347053977770115
+    },
+    {
+      "minute": 25,
+      "toxicity": 0.65,
+      "sentiment": 0.4992887749293623,
+      "sigma_c": 0.6602567457504873,
+      "temperature": 0.4687838945098592,
+      "alert": 1,
+      "observable": 0.7754516494682183
+    },
+    {
+      "minute": 26,
+      "toxicity": 0.6799999999999999,
+      "sentiment": 0.5809357913524698,
+      "sigma_c": 0.6664923106885693,
+      "temperature": 0.3923522008103172,
+      "alert": 1,
+      "observable": 0.2833999471896731
+    },
+    {
+      "minute": 27,
+      "toxicity": 0.71,
+      "sentiment": 0.753343818590477,
+      "sigma_c": 0.6714642111510898,
+      "temperature": 0.3080607948158518,
+      "alert": 1,
+      "observable": 0.19679876098115764
+    },
+    {
+      "minute": 28,
+      "toxicity": 0.74,
+      "sentiment": 0.8636981405293773,
+      "sigma_c": 0.6739387258132989,
+      "temperature": 0.21594171357234998,
+      "alert": 1,
+      "observable": 0.03881904139911678
+    },
+    {
+      "minute": 29,
+      "toxicity": 0.77,
+      "sentiment": 0.916495746953908,
+      "sigma_c": 0.6762188233254025,
+      "temperature": 0.11642012807988059,
+      "alert": 1,
+      "observable": 0.016325805479139085
+    }
+  ],
+  "metadata": {
+    "duration_minutes": 30,
+    "description": "LLM Toxic Drift Simulation"
+  }
+};
+        
+        const baseline = data.baseline;
+        const sigmac = data.sigma_c_protected;
+        const minutes = baseline.map(d => d.minute);
+        
+        // Chart.js default config for ForgottenForge theme
+        Chart.defaults.color = '#666666';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+        Chart.defaults.font.size = 11;
+        
+        // Sentiment Chart
+        new Chart(document.getElementById('sentimentChart'), {
+            type: 'line',
+            data: {
+                labels: minutes,
+                datasets: [
+                    {
+                        label: 'Baseline (Traditional)',
+                        data: baseline.map(d => d.sentiment),
+                        borderColor: '#ff4444',
+                        backgroundColor: 'rgba(255, 68, 68, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Sigma-C Protected',
+                        data: sigmac.map(d => d.sentiment),
+                        borderColor: '#44ff44',
+                        backgroundColor: 'rgba(68, 255, 68, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1.0,
+                        title: { 
+                            display: true, 
+                            text: 'Sentiment Score',
+                            color: '#666666'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    },
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: 'Time (Minutes)',
+                            color: '#666666'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Sigma-C Chart
+        new Chart(document.getElementById('sigmaCChart'), {
+            type: 'line',
+            data: {
+                labels: minutes,
+                datasets: [
+                    {
+                        label: 'Sigma-C Score',
+                        data: sigmac.map(d => d.sigma_c),
+                        borderColor: '#ffaa00',
+                        backgroundColor: 'rgba(255, 170, 0, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Critical Threshold',
+                        data: Array(minutes.length).fill(0.7),
+                        borderColor: '#ff4444',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1.0,
+                        title: { 
+                            display: true, 
+                            text: 'Sigma-C (Lower = More Critical)',
+                            color: '#666666'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    },
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: 'Time (Minutes)',
+                            color: '#666666'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Temperature Chart
+        new Chart(document.getElementById('temperatureChart'), {
+            type: 'line',
+            data: {
+                labels: minutes,
+                datasets: [
+                    {
+                        label: 'Baseline Temperature',
+                        data: baseline.map(d => d.temperature),
+                        borderColor: '#666666',
+                        backgroundColor: 'rgba(102, 102, 102, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    },
+                    {
+                        label: 'Sigma-C Controlled Temperature',
+                        data: sigmac.map(d => d.temperature),
+                        borderColor: '#44aaff',
+                        backgroundColor: 'rgba(68, 170, 255, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1.0,
+                        title: { 
+                            display: true, 
+                            text: 'Temperature',
+                            color: '#666666'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    },
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: 'Time (Minutes)',
+                            color: '#666666'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Toxicity Chart
+        new Chart(document.getElementById('toxicityChart'), {
+            type: 'line',
+            data: {
+                labels: minutes,
+                datasets: [
+                    {
+                        label: 'Input Toxicity',
+                        data: baseline.map(d => d.toxicity),
+                        borderColor: '#cc44ff',
+                        backgroundColor: 'rgba(204, 68, 255, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 },
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1.0,
+                        title: { 
+                            display: true, 
+                            text: 'Toxicity Level',
+                            color: '#666666'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    },
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: 'Time (Minutes)',
+                            color: '#666666'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Update stats
+        const baselineFinal = baseline[baseline.length - 1];
+        const sigmacFinal = sigmac[sigmac.length - 1];
+        
+        document.getElementById('baselineSentiment').textContent = baselineFinal.sentiment.toFixed(2);
+        document.getElementById('sigmacSentiment').textContent = sigmacFinal.sentiment.toFixed(2);
+        document.getElementById('finalTemp').textContent = sigmacFinal.temperature.toFixed(2);
+        
+        const baselineStatusEl = document.getElementById('baselineStatus');
+        baselineStatusEl.textContent = baselineFinal.sentiment < 0.5 ? 'COLLAPSED' : 'OK';
+        baselineStatusEl.className = 'status-badge ' + (baselineFinal.sentiment < 0.5 ? 'status-collapsed' : 'status-stable');
+        
+        const sigmacStatusEl = document.getElementById('sigmacStatus');
+        sigmacStatusEl.textContent = sigmacFinal.sentiment > 0.5 ? 'STABLE' : 'DEGRADED';
+        sigmacStatusEl.className = 'status-badge ' + (sigmacFinal.sentiment > 0.5 ? 'status-stable' : 'status-collapsed');
+        
+        // Calculate early detection
+        // Find when Sigma-C first alerted (alert == 1)
+        const firstSigmaCAlert = sigmac.findIndex(d => d.alert == 1);
+        // Find when baseline first alerted (alert == 1) 
+        const firstBaselineAlert = baseline.findIndex(d => d.alert == 1);
+        
+        // Calculate how many minutes earlier Sigma-C detected the problem
+        const earlyDetectionMinutes = (firstBaselineAlert >= 0 && firstSigmaCAlert >= 0) 
+            ? (firstBaselineAlert - firstSigmaCAlert) 
+            : 'N/A';
+        
+        document.getElementById('earlyDetection').textContent = 
+            (typeof earlyDetectionMinutes === 'number' && earlyDetectionMinutes > 0) 
+                ? earlyDetectionMinutes + ' Min' 
+                : 'N/A';
+    </script>
+</body>
+</html>
