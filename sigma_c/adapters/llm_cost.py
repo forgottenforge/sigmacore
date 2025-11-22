@@ -42,9 +42,29 @@ class LLMCostAdapter(SigmaCAdapter):
         rates = np.array([m['hallucination_rate'] for m in models])
         names = [m['name'] for m in models]
         
+        # Safety Constraint (Hard Barrier)
+        MAX_HALLUCINATION_RATE = 0.15
+        valid_mask = rates < MAX_HALLUCINATION_RATE
+        
         # Calculate Criticality Score: 1 / (Cost * Rate)
         # We want low cost and low rate.
-        scores = 1.0 / (costs * rates + 1e-9)
+        scores = np.zeros_like(costs)
+        
+        # Apply scores only to valid models
+        if np.any(valid_mask):
+            scores[valid_mask] = 1.0 / (costs[valid_mask] * rates[valid_mask] + 1e-9)
+            # Heavily penalize unsafe models
+            scores[~valid_mask] = -1.0
+        else:
+            # If no models are safe, return the safest one regardless of cost
+            best_idx = np.argmin(rates)
+            return {
+                'best_model': names[best_idx],
+                'optimal_cost': float(costs[best_idx]),
+                'safety_score': float(1.0 - rates[best_idx]),
+                'sigma_c': float(1.0 - rates[best_idx]),
+                'warning': 'No models met safety criteria'
+            }
         
         best_idx = np.argmax(scores)
         

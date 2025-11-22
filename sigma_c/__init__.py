@@ -10,5 +10,5 @@ from .adapters.magnetic import MagneticAdapter
 from .adapters.edge import EdgeAdapter
 from .adapters.llm_cost import LLMCostAdapter
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __all__ = ["Universe", "SigmaCAdapter", "EdgeAdapter", "LLMCostAdapter"]

@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Build and installation script for the Sigma-C Framework.
 
 For commercial licensing without AGPL-3.0 obligations, contact:
-[info@forgottenforge.xyz]
+nfo@forgottenforge.xyz
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
@@ -33,7 +33,7 @@ ext_modules = [
 setup(
 
     name="sigma_c_framework",
-    version="2.0.0",
+    version="2.0.2",
     packages=find_packages(),
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},

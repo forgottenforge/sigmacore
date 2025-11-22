@@ -39,6 +39,6 @@ Deep dives into specific optimization domains:
 
 ## 🆘 Support
 - **Issues**: [GitHub Issues](https://github.com/forgottenforge/sigmacore/issues)
-- **Contact**: info@forgottenforge.xyz
+- **Contact**: nfo@forgottenforge.xyz
 
 Copyright (c) 2025 ForgottenForge.xyz

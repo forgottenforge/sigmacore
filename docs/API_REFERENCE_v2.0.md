@@ -378,4 +378,4 @@ print(f"Cascade Risk: {stability['cascade_risk']:.2%}")
 Copyright (c) 2025 ForgottenForge.xyz
 
 Licensed under AGPL-3.0-or-later OR Commercial License.
-For commercial licensing, contact: info@forgottenforge.xyz
+For commercial licensing, contact: nfo@forgottenforge.xyz
