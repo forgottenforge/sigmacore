@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigma-c-framework"
-version = "2.0.1"
+version = "2.0.2"
 description = "Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
 readme = "README.md"
 requires-python = ">=3.8"

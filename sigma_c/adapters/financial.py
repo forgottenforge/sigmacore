@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Adapter for Financial Markets and Regime Detection.
 
 For commercial licensing without AGPL-3.0 obligations, contact:
-[nfo@forgottenforge.xyz]
+nfo@forgottenforge.xyz
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
