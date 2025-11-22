@@ -154,7 +154,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 
 Dual-licensed under:
 - AGPL-3.0-or-later (open source)
-- Commercial License (contact: info@forgottenforge.xyz)
+- Commercial License (contact: nfo@forgottenforge.xyz)
 
 ## What's Next (v2.1.0 Roadmap)
 

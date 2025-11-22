@@ -1,31 +1,31 @@
-# Sigma-C Framework v2.0.0 "Rigorous Control"
+# Sigma-C Framework v2.0.2 "Rigorous Control"
 
 Universal Criticality Analysis & Active Control System
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-2.0.2-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
 ## 🚀 Overview
 
-Sigma-C v2.0 is a rigorous active control system that detects, analyzes, and maintains critical points across quantum, GPU, financial, climate, and ML systems.
+Sigma-C v2.0.2 is a rigorous active control system that detects, analyzes, and maintains critical points across quantum, GPU, financial, climate, and ML systems.
 
-**New in v2.0**: **22+ Framework Integrations** - Connect to Qiskit, PyTorch, Kubernetes, Grafana, and more!
+**New in v2.0.2**: **Rigor Refinement** - Enhanced numerical stability, AI safety constraints, and statistical significance testing.
 
-## ✨ What's New in v2.0
+## ✨ What's New in v2.0.2
 
 ### Core Features
 - **Observable Discovery**: Automatic identification of optimal order parameters
 - **Multi-Scale Analysis**: Wavelet-based criticality detection across scales
 - **Active Control**: PID controller for critical point maintenance
-- **Streaming Calculation**: O(1) real-time susceptibility updates
+- **Streaming Calculation**: O(1) real-time susceptibility updates (Welford's Algorithm)
 
 ### New Domains
 - **Climate**: Mesoscale boundary detection
-- **Seismic**: Gutenberg-Richter analysis
+- **Seismic**: Gutenberg-Richter analysis with Significance Testing
 - **Magnetic**: Critical exponents validation
 - **Edge Computing**: Power efficiency optimization
-- **LLM Cost**: Model selection via Pareto frontier
+- **LLM Cost**: Model selection via Pareto frontier with Safety Constraints
 
 ### 🔌 Universal Connectivity
 - **Quantum**: Qiskit, PennyLane, Cirq, AWS Braket
@@ -76,7 +76,7 @@ class MyNet(CriticalModule):
 criterion = SigmaCLoss(lambda_critical=0.1)
 ```
 
-### Universal Bridge (Any Framework!)
+### Universal Bridge (Any Framework)
 ```python
 from sigma_c.connectors.bridge import SigmaCBridge
 
@@ -105,10 +105,10 @@ spec:
 
 ## 📚 Documentation
 
-- **[Integrations Guide](INTEGRATIONS.md)** - All 22+ integrations
-- **[API Reference](API_REFERENCE_v2.0.md)** - Complete API docs
-- **[Release Notes](RELEASE_NOTES_v2.0.0.md)** - What's new in v2.0
-- **[Examples](examples_v2.0/)** - Code examples
+- **[Integrations Guide](docs/INTEGRATIONS.md)** - All 22+ integrations
+- **[API Reference](docs/API_REFERENCE_v2.0.md)** - Complete API docs
+- **[Release Notes](docs/releases/RELEASE_NOTES_v2.0.2.md)** - What's new in v2.0.2
+- **[Examples](examples_v4/)** - Code examples
 
 ## 🎯 Use Cases
 

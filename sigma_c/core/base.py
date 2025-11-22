@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Base classes for all domain-specific adapters.
 
 For commercial licensing without AGPL-3.0 obligations, contact:
-[nfo@forgottenforge.xyz]
+nfo@forgottenforge.xyz
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
@@ -22,12 +22,13 @@ class SigmaCAdapter(ABC):
     
     Version 1.0.0: Basic susceptibility computation
     Version 1.1.0: Added universal diagnostics system
+    Version 2.0.2: Rigor Refinement (Stability & Safety)
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.engine = Engine()
-        self._version = "1.1.0"  # Track adapter version
+        self._version = "2.0.2"  # Track adapter version
     
     @abstractmethod
     def get_observable(self, data: Any, **kwargs) -> float:

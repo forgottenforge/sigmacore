@@ -193,7 +193,7 @@ Thank you to the community for reporting issues and helping us achieve 100% prod
 ## 📞 Support
 
 - **Issues**: https://github.com/forgottenforge/sigmacore/issues
-- **Email**: info@forgottenforge.xyz
+- **Email**: nfo@forgottenforge.xyz
 - **License**: AGPL-3.0-or-later OR Commercial
 
 ---

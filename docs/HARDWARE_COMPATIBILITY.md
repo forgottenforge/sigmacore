@@ -87,4 +87,4 @@ adapter = QuantumAdapter(config={'device': 'ibm', 'auto_compile': True})
 
 ## Contact
 
-For hardware-specific optimization requests: info@forgottenforge.xyz
+For hardware-specific optimization requests: nfo@forgottenforge.xyz

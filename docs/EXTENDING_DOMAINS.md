@@ -191,11 +191,11 @@ print(f"Sigma_c: {result.sigma_c_after}")
 ## Support
 
 For questions or assistance extending the framework:
-- Email: info@forgottenforge.xyz
+- Email: nfo@forgottenforge.xyz
 - Documentation: See `DOCUMENTATION.md`
 - Examples: See `examples_v1.2/`
 
 ## License
 
 Extensions must comply with AGPL-3.0-or-later OR Commercial License.
-Contact info@forgottenforge.xyz for commercial licensing.
+Contact nfo@forgottenforge.xyz for commercial licensing.
