@@ -363,13 +363,6 @@ print(f"Cascade Risk: {stability['cascade_risk']:.2%}")
 - Wavelet transform: O(n × m) for n samples, m scales
 - Optimization history: O(k^d) for full trajectory
 
----
-
-## References
-
-1. **Quantum Paper**: "Criticality-Based Quantum Advantage" (arXiv:XXXX.XXXXX)
-2. **GPU Paper**: "Cache Hierarchy Criticality" (IEEE TPDS 2024)
-3. **Financial Paper**: "Market Microstructure Criticality" (J. Finance 2023)
 
 ---
 
