@@ -141,13 +141,6 @@ All theoretical values validated:
 - GPU cache detection needs CUDA runtime for real measurements
 - GARCH optimization requires scipy
 
-## Acknowledgments
-
-This release incorporates feedback from:
-- Community review (November 2025)
-- Scientific validation against reference papers
-- Production deployment testing
-
 ## License
 
 Copyright (c) 2025 ForgottenForge.xyz
