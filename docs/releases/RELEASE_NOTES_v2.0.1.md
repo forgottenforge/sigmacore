@@ -184,12 +184,6 @@ Expected output:
 
 ---
 
-## 🙏 Acknowledgments
-
-Thank you to the community for reporting issues and helping us achieve 100% production readiness!
-
----
-
 ## 📞 Support
 
 - **Issues**: https://github.com/forgottenforge/sigmacore/issues
