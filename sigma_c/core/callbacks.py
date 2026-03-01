@@ -8,7 +8,6 @@ Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
 from typing import Dict, Any, Optional
-import json
 import time
 
 class OptimizationCallback:

@@ -16,6 +16,13 @@ except ImportError:
     _HAS_QUANTLIB = False
     ql = None
 
+try:
+    from scipy.stats import norm as _scipy_norm
+    _HAS_SCIPY = True
+except ImportError:
+    _HAS_SCIPY = False
+    _scipy_norm = None
+
 
 class CriticalPricing:
     """
@@ -94,18 +101,23 @@ class CriticalPricing:
     @staticmethod
     def _bs_analytical(S: float, K: float, r: float, sigma: float, T: float, option_type: str) -> float:
         """
-        Analytical Black-Scholes formula (fallback).
+        Analytical Black-Scholes formula (fallback when QuantLib is unavailable).
+        Requires scipy for the normal CDF.
         """
-        from scipy.stats import norm
-        
+        if not _HAS_SCIPY:
+            raise ImportError(
+                "Neither QuantLib nor scipy installed. "
+                "Run: pip install QuantLib-Python  or  pip install scipy"
+            )
+
         d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
-        
+
         if option_type == 'call':
-            price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+            price = S * _scipy_norm.cdf(d1) - K * np.exp(-r * T) * _scipy_norm.cdf(d2)
         else:
-            price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
-        
+            price = K * np.exp(-r * T) * _scipy_norm.cdf(-d2) - S * _scipy_norm.cdf(-d1)
+
         return float(price)
     
     @staticmethod

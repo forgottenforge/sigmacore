@@ -1,9 +1,9 @@
-# Sigma-C Framework v2.0.3
+# Sigma-C Framework v2.1.0
 
 **Universal Criticality Analysis & Active Control System**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-2.0.3-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
 ## Overview
@@ -30,7 +30,7 @@ This paper demonstrates the framework's application to **quantum computing on re
 - **Observable Discovery**: Automatic identification of optimal order parameters
 - **Multi-Scale Analysis**: Wavelet-based criticality detection across scales
 - **Statistical Rigor**: Jonckheere-Terpstra trend tests, isotonic regression with bootstrap CI
-- **High-Performance Core**: Optional C++ backend via pybind11
+- **High-Performance Core**: Optional C++ backend via pybind11, CUDA acceleration via CuPy
 
 ## Domain Adapters
 
@@ -46,6 +46,33 @@ This paper demonstrates the framework's application to **quantum computing on re
 | Edge/IoT | `EdgeAdapter` | Power efficiency phase transitions |
 | LLM Cost | `LLMCostAdapter` | Cost-quality Pareto frontier analysis |
 
+## Integrations
+
+| Category | Integration | Description |
+|----------|------------|-------------|
+| **Quantum** | Qiskit | Circuit noise sensitivity analysis |
+| | PennyLane | VQA criticality tracking device |
+| | Cirq | Circuit optimization for stability |
+| | AWS Braket | Native quantum hardware adapter |
+| **ML Frameworks** | PyTorch | `CriticalModule` with activation tracking |
+| | TensorFlow | `SigmaCCallback` for Keras training |
+| | JAX | `critical_jit` decorator, `CriticalOptimizer` |
+| | CUDA/CuPy | GPU-accelerated susceptibility computation |
+| **APIs** | REST | FastAPI endpoint (`SigmaCAPI`) |
+| | GraphQL | Strawberry + built-in zero-dep resolver |
+| | WASM | Browser-native JS module generator |
+| **Monitoring** | Grafana | Prometheus metrics export (push + pull) |
+| | Kubernetes | Pod criticality monitoring + autoscaling |
+| | GitHub Actions | AST-based code complexity CI gate |
+| **Finance** | QuantLib | Black-Scholes with criticality adjustment |
+| | Zipline | Crash avoidance trading strategy |
+| **Platforms** | Home Assistant | Smart home criticality sensor |
+| | VSCode | Real-time code complexity status bar |
+| **Reporting** | LaTeX | Publication-ready tables, figures, reports |
+| **Bindings** | Julia | `SigmaC.jl` native binding |
+| | Mathematica | `SigmaC.m` Wolfram Language binding |
+| | Lean 4 | `SigmaC.lean` theorem prover binding |
+
 ## Installation
 
 ```bash
@@ -55,8 +82,8 @@ pip install sigma-c-framework
 # With quantum integrations
 pip install sigma-c-framework[quantum]
 
-# With ML integrations
-pip install sigma-c-framework[ml]
+# With GPU acceleration
+pip install sigma-c-framework[gpu]
 ```
 
 ## Quick Start
@@ -69,7 +96,6 @@ from sigma_c import Universe
 
 # Generate synthetic magnetization data across temperatures
 temperatures = np.linspace(1.5, 3.5, 50)
-# Simulate mean-field magnetization: M ~ (Tc - T)^0.125
 Tc = 2.269  # Exact 2D Ising critical temperature
 magnetization = np.where(
     temperatures < Tc,
@@ -119,17 +145,31 @@ print(f"Persistence: {garch['persistence']:.3f}")
 print(f"Regime:      {'Critical' if garch['persistence'] > 0.95 else 'Stable'}")
 ```
 
-## Integrations
+## Examples
 
-- **Quantum**: Qiskit, PennyLane, Cirq, AWS Braket
-- **ML**: PyTorch, JAX, TensorFlow
-- **Monitoring**: Grafana, Kubernetes
-- **Reporting**: LaTeX, publication-quality plots
+The `examples/v4/` directory contains 12 demo files covering every module:
+
+| Demo | Covers |
+|------|--------|
+| `demo_quantum.py` | Quantum noise threshold detection |
+| `demo_finance.py` | GARCH volatility, Hurst exponent |
+| `demo_climate.py` | Atmospheric mesoscale boundary |
+| `demo_magnetic.py` | 2D Ising Curie temperature |
+| `demo_seismic.py` | Gutenberg-Richter b-value |
+| `demo_gpu.py` | GPU cache transition, roofline |
+| `demo_diagnostics.py` | Universal diagnostics system |
+| `demo_integrations.py` | GraphQL, CI, REST, WASM, HA, TF, LaTeX, Bridge |
+| `demo_ml_frameworks.py` | PyTorch, JAX, CUDA, TensorFlow |
+| `demo_quantum_connectors.py` | Qiskit, PennyLane, Cirq |
+| `demo_edge_llm.py` | Edge IoT, ML hyperparameters, LLM cost |
+| `demo_optimization.py` | ML optimizer, brute force, QuantLib, Zipline, Grafana/K8s |
+
+All demos run locally without external services or optional dependencies.
 
 ## Documentation
 
 - [API Reference](docs/API_REFERENCE_v2.0.md)
-- [Release Notes](docs/releases/RELEASE_NOTES_v2.0.2.md)
+- [Release Notes](docs/releases/)
 - [Examples](examples/v4/)
 
 ## License
