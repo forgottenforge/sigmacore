@@ -1,85 +1,94 @@
 #!/usr/bin/env python3
 """
-Sigma-C GPU Demo
-==========================================================
+Sigma-C GPU Demo: Cache Transition Detection
+==============================================
 Copyright (c) 2025 ForgottenForge.xyz
 
-Demonstrates how to use the GPUAdapter to auto-tune kernel parameters 
-by finding the critical performance threshold.
+GPU performance degrades non-linearly when working sets exceed cache
+boundaries. This creates measurable phase transitions at each level
+of the memory hierarchy (L1, L2, L3/VRAM).
 
-For commercial licensing without AGPL-3.0 obligations, contact:
-[nfo@forgottenforge.xyz]
+This demo uses Sigma-C to sweep workload intensity and detect the
+critical point where performance drops sharply -- the cache thrashing
+threshold. It then validates the trend with a Jonckheere-Terpstra test.
+
+Runs in simulation mode if CuPy is not installed.
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
 
 import sys
 import os
-import matplotlib.pyplot as plt
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-# Ensure we can import sigma_c from local source
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+import numpy as np
 from sigma_c import Universe
 
+
 def main():
-    print("🎮 Starting GPU Kernel Auto-Tuning...")
-    
-    # 1. Initialize GPU Adapter
-    # If cupy is not installed, it will run in simulation mode.
+    print("=" * 60)
+    print("  GPU CACHE TRANSITION DETECTION")
+    print("  Finding the workload threshold for cache thrashing")
+    print("=" * 60)
+
     gpu = Universe.gpu()
-    print("✓ GPU Adapter initialized")
-    
-    # 2. Run Auto-Tuning
-    # We sweep a parameter 'alpha' (e.g., memory access pattern or thread block size proxy)
-    # to find the 'critical point' where performance degrades non-linearly (cache thrashing).
-    print("✓ Running benchmark sweep...")
-    
-    res = gpu.auto_tune(
-        alpha_levels=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        epsilon_points=10
+
+    # Use a small set of alpha levels for a quick demo
+    alpha_levels = [0.0, 0.15, 0.3, 0.45, 0.6]
+    print(f"\n  Testing {len(alpha_levels)} workload intensities...")
+    print(f"  (alpha = memory pressure parameter)")
+
+    result = gpu.auto_tune(
+        alpha_levels=alpha_levels,
+        epsilon_points=12
     )
-    
-    # 3. Analyze Results
-    # The auto_tune method returns a dict with 'tuning_results' (per alpha) and 'statistics'
-    tuning_results = res['tuning_results']
-    stats = res['statistics']
-    
-    # Find best alpha (lowest sigma_c usually implies most stable, but here we want the one that pushes criticality furthest)
-    # Actually, in this context, we want to see which alpha has the highest critical point (most robust)
-    best_alpha = max(tuning_results.keys(), key=lambda k: tuning_results[k]['sigma_c'])
-    
-    print("\n📊 Tuning Results:")
-    print(f"   Optimal Alpha: {best_alpha:.2f}")
-    print(f"   P-Value (Jonckheere-Terpstra): {stats['jonckheere_terpstra']['p_value']:.4e}")
-    
-    if stats['jonckheere_terpstra']['p_value'] < 0.05:
-        print("   => Statistically significant performance trend detected.")
-    
-    # 4. Visualize
-    try:
-        plt.figure(figsize=(10, 5))
-        
-        # Plot Performance vs Alpha
-        alphas = sorted(tuning_results.keys())
-        # We plot the critical point (sigma_c) for each alpha
-        critical_points = [tuning_results[a]['sigma_c'] for a in alphas]
-        
-        plt.plot(alphas, critical_points, 'm-D', label='Critical Point (Robustness)')
-        plt.axvline(best_alpha, color='g', linestyle='--', label=f'Optimal {best_alpha:.2f}')
-        
-        plt.xlabel("Tuning Parameter (Alpha)")
-        plt.ylabel("Critical Noise Level (σ_c)")
-        plt.title("GPU Kernel Criticality Tuning")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        
-        output_file = "gpu_results.png"
-        plt.savefig(output_file)
-        print(f"✓ Plot saved to {output_file}")
-        
-    except Exception as e:
-        print(f"⚠️ Could not generate plot: {e}")
+
+    tuning = result['tuning_results']
+    stats = result['statistics']
+
+    # Display per-alpha results
+    print(f"\n  {'Alpha':>7} {'sigma_c':>10} {'kappa':>8} {'Mean GFLOPS':>13}")
+    print("  " + "-" * 42)
+    for alpha in sorted(tuning.keys()):
+        r = tuning[alpha]
+        mean_gflops = np.mean(r['gflops'])
+        print(f"  {alpha:7.2f} {r['sigma_c']:10.4f} {r['kappa']:8.2f} {mean_gflops:13.1f}")
+    print("  " + "-" * 42)
+
+    # Best configuration
+    best_alpha = max(tuning.keys(), key=lambda k: tuning[k]['kappa'])
+    print(f"\n  Sharpest transition at alpha = {best_alpha:.2f}")
+    print(f"    sigma_c = {tuning[best_alpha]['sigma_c']:.4f}")
+    print(f"    kappa   = {tuning[best_alpha]['kappa']:.2f}")
+
+    # Statistical validation
+    jt = stats['jonckheere_terpstra']
+    print(f"\n  Jonckheere-Terpstra trend test:")
+    print(f"    Statistic: {jt.get('statistic', jt.get('J', 'N/A'))}")
+    print(f"    p-value:   {jt['p_value']:.4e}")
+    if jt['p_value'] < 0.05:
+        print(f"    Result:    Significant monotonic trend (p < 0.05)")
+        print(f"               sigma_c increases with workload intensity")
+    else:
+        print(f"    Result:    No significant trend detected")
+
+    # Roofline analysis
+    roofline = gpu.analyze_roofline()
+    print(f"\n  Roofline Model:")
+    print(f"    Peak compute: {roofline['peak_gflops']:.0f} GFLOPS")
+    print(f"    Peak bandwidth: {roofline['peak_bandwidth_gbs']:.0f} GB/s")
+    print(f"    Ridge point: {roofline['ridge_point']:.1f} FLOP/Byte")
+    print(f"    Current regime: {roofline['regime']}")
+
+    # Thermal throttling prediction
+    for temp in [60.0, 75.0, 82.0]:
+        shift = gpu.predict_thermal_throttling(temp)
+        print(f"    sigma_c shift at {temp:.0f}C: {shift:.3f}")
+
+    print(f"\n  The critical point (sigma_c) tells you the exact workload")
+    print(f"  intensity where your GPU transitions from efficient to")
+    print(f"  cache-thrashing behavior. Stay below it for optimal perf.\n")
+
 
 if __name__ == "__main__":
     main()

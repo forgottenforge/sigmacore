@@ -7,9 +7,8 @@ Copyright (c) 2025 ForgottenForge.xyz
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import numpy as np
-import pandas as pd
 from .universal import UniversalOptimizer, OptimizationResult
 from ..adapters.financial import FinancialAdapter
 

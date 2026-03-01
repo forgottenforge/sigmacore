@@ -17,8 +17,6 @@ except ImportError:
     _HAS_TORCH = False
     nn = None
 
-from ..core.engine import Engine
-
 
 class CriticalModule(nn.Module if _HAS_TORCH else object):
     """
@@ -156,9 +154,18 @@ class SigmaCLoss(nn.Module if _HAS_TORCH else object):
         # Criticality penalty
         if model is not None and hasattr(model, 'sigma_c_history'):
             if model.sigma_c_history:
-                current_sigma_c = model.sigma_c_history[-1]
+                current_sigma_c = torch.tensor(
+                    model.sigma_c_history[-1],
+                    dtype=output.dtype,
+                    device=output.device,
+                )
+                target = torch.tensor(
+                    self.target_sigma_c,
+                    dtype=output.dtype,
+                    device=output.device,
+                )
                 # Penalize deviation from target
-                critical_loss = (current_sigma_c - self.target_sigma_c) ** 2
+                critical_loss = (current_sigma_c - target) ** 2
                 total_loss = base_loss + self.lambda_critical * critical_loss
                 return total_loss
         

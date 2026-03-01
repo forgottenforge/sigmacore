@@ -6,7 +6,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 PennyLane device plugin for criticality-aware quantum computing.
 """
 
-from typing import Dict, Any, Optional, Sequence
+from typing import Dict, Any, Optional
 import numpy as np
 
 try:
@@ -92,9 +92,20 @@ class SigmaCDevice(DefaultQubit if _HAS_PENNYLANE else object):
         }
 
 
-# Register device with PennyLane
+# Register device with PennyLane.
+# NOTE: This is a registration helper that relies on PennyLane internals.
+# For production use, register via a proper setuptools entry point:
+#   [options.entry_points]
+#   pennylane.plugins =
+#       sigma_c.simulator = sigma_c.plugins.pennylane:SigmaCDevice
 if _HAS_PENNYLANE:
     try:
-        qml.device._device_classes['sigma_c.simulator'] = SigmaCDevice
-    except:
+        if hasattr(qml, 'plugin_devices'):
+            qml.plugin_devices['sigma_c.simulator'] = SigmaCDevice
+        elif hasattr(qml, '_device_registry'):
+            qml._device_registry['sigma_c.simulator'] = SigmaCDevice
+        else:
+            # Fallback: best-effort registration via internal API
+            qml.device._device_classes['sigma_c.simulator'] = SigmaCDevice
+    except Exception:
         pass  # Graceful degradation if registration fails

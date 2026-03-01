@@ -6,7 +6,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Google Cirq integration for criticality-aware quantum optimization.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 import numpy as np
 
 try:
@@ -15,8 +15,6 @@ try:
 except ImportError:
     _HAS_CIRQ = False
     cirq = None
-
-from ..core.engine import Engine
 
 
 class CirqCriticality:
@@ -43,7 +41,6 @@ class CirqCriticality:
             if not _HAS_CIRQ:
                 raise ImportError("Cirq not installed. Run: pip install cirq")
             self.target_sigma_c = target_sigma_c
-            self.engine = Engine()
         
         def optimize(self, circuit: 'cirq.Circuit') -> 'cirq.Circuit':
             """

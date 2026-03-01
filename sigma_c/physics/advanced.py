@@ -11,8 +11,7 @@ Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
 import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
-from scipy.optimize import curve_fit
+from typing import Dict, Any, List
 
 class RenormalizationGroup:
     """
@@ -94,7 +93,7 @@ class ChaosQuantifier:
     
     def compute_lyapunov(self, time_series: np.ndarray, dt: float = 1.0) -> float:
         """
-        Estimate maximal Lyapunov exponent (Rosenstein algorithm simplified).
+        Estimate maximal Lyapunov exponent from successive differences.
         """
         # Very simplified placeholder for 1D series
         # In reality, needs embedding dimension and phase space reconstruction

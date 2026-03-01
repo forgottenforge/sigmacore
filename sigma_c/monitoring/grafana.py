@@ -7,7 +7,6 @@ Grafana data source plugin for real-time criticality monitoring.
 """
 
 from typing import Dict, Any, List
-import time
 
 try:
     from prometheus_client import Gauge, push_to_gateway

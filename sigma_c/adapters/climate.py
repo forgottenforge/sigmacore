@@ -70,7 +70,11 @@ class ClimateAdapter(SigmaCAdapter):
         lapse_rates = -np.gradient(temperature_profiles, z, axis=1)
         
         # Tropopause is where lapse rate drops below 2 K/km
-        tropopause_indices = np.argmax(lapse_rates < 2.0, axis=1)
+        condition = lapse_rates < 2.0
+        # argmax returns 0 when condition is never met; detect and handle that
+        tropopause_indices = np.argmax(condition, axis=1)
+        never_met = ~np.any(condition, axis=1)
+        tropopause_indices[never_met] = len(z) - 1
         tropopause_heights = z[tropopause_indices]
         
         return {

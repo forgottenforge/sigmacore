@@ -13,6 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
 import numpy as np
 from typing import Dict, Any, Tuple
+
 import warnings
 
 try:
@@ -69,17 +70,20 @@ class Engine:
             return np.percentile(means, 2.5), np.percentile(means, 97.5)
 
     def _python_fallback(self, epsilon, observable, kernel_sigma):
-        # Minimal fallback implementation
+        """Pure-Python fallback when C++ core is not available."""
         from scipy.ndimage import gaussian_filter1d
         smoothed = gaussian_filter1d(observable, kernel_sigma)
         chi = np.gradient(smoothed, epsilon)
         chi = np.abs(chi)
-        idx = np.argmax(chi)
+        idx = int(np.argmax(chi))
+        chi_max = float(np.max(chi))
+        baseline = float(np.mean(chi)) if len(chi) > 0 else 1.0
+        kappa = chi_max / baseline if baseline > 1e-12 else 0.0
         return {
             'chi': chi,
-            'sigma_c': epsilon[idx],
-            'kappa': 0.0, # Simplified
-            'chi_max': float(np.max(chi)),
+            'sigma_c': float(epsilon[idx]),
+            'kappa': kappa,
+            'chi_max': chi_max,
             'smoothed': smoothed,
-            'baseline': 1.0
+            'baseline': baseline
         }
