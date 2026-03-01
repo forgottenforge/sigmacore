@@ -1,86 +1,91 @@
 #!/usr/bin/env python3
 """
-Sigma-C Financial Demo
-==========================================================
+Sigma-C Financial Demo: Volatility Regime Detection
+=====================================================
 Copyright (c) 2025 ForgottenForge.xyz
 
-Demonstrates how to use the FinancialAdapter to detect volatility regimes 
-and critical market shifts using Sigma-C.
+Financial markets exhibit volatility clustering: large price moves tend
+to be followed by more large moves. This is quantified by a GARCH(1,1)
+model where the persistence parameter (alpha + beta) approaching 1.0
+signals criticality -- the market is on the edge of a regime change.
 
-For commercial licensing without AGPL-3.0 obligations, contact:
-[nfo@forgottenforge.xyz]
+This demo generates two synthetic return series (calm vs. turbulent),
+fits GARCH models, and shows how Sigma-C detects the different regimes.
+
+No external data or yfinance required.
 
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
 
 import sys
 import os
-import pandas as pd
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 import numpy as np
-import matplotlib.pyplot as plt
-
-# Ensure we can import sigma_c from local source
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from sigma_c import Universe
 
-def main():
-    print("📈 Starting Financial Regime Detection...")
-    
-    # 1. Initialize Financial Adapter
-    fin = Universe.finance()
-    print("✓ Financial Adapter initialized")
-    
-    # 2. Fetch Data (or use mock if offline)
-    symbol = "SPY"
-    print(f"✓ Analyzing {symbol} market data...")
-    
-    # The adapter handles data fetching. If yfinance fails (no internet), it mocks data.
-    # We can also pass our own DataFrame:
-    # data = pd.read_csv('my_data.csv')
-    # res = fin.detect_regime(data=data)
-    
-    res = fin.detect_regime(symbol=symbol)
-    
-    # 3. Analyze Results
-    sigma_c = res['sigma_c']
-    kappa = res['kappa']
-    regime = res['regime']
-    
-    print("\n📊 Market Status:")
-    print(f"   Detected Regime:      {regime}")
-    print(f"   Critical Scale (σ_c): {sigma_c:.2f} days")
-    print(f"   Stability Score (κ):  {kappa:.2f}")
-    
-    if kappa > 2.0:
-        print("   => Strong evidence of a critical phase transition (market shift).")
-    else:
-        print("   => Market is relatively stable or in a mixed state.")
 
-    # 4. Visualize
-    try:
-        plt.figure(figsize=(10, 5))
-        
-        # Plot Volatility Clustering Observable
-        sigma_vals = res['sigma_values']
-        obs_vals = res['observable']
-        
-        plt.plot(sigma_vals, obs_vals, 'g-o', label='Volatility Clustering')
-        plt.axvline(sigma_c, color='r', linestyle='--', label=f'Critical Scale {sigma_c:.1f}d')
-        
-        plt.xscale('log')
-        plt.xlabel("Time Scale (Days)")
-        plt.ylabel("Clustering Strength")
-        plt.title(f"Financial Criticality Analysis: {symbol}")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        
-        output_file = "finance_results.png"
-        plt.savefig(output_file)
-        print(f"✓ Plot saved to {output_file}")
-        
-    except Exception as e:
-        print(f"⚠️ Could not generate plot: {e}")
+def generate_garch_returns(n=2000, omega=1e-6, alpha=0.1, beta=0.85, seed=42):
+    """Generate synthetic returns from a GARCH(1,1) process."""
+    rng = np.random.default_rng(seed)
+    returns = np.zeros(n)
+    sigma2 = np.zeros(n)
+    sigma2[0] = omega / (1 - alpha - beta) if (alpha + beta) < 1 else omega * 100
+
+    for t in range(1, n):
+        sigma2[t] = omega + alpha * returns[t-1]**2 + beta * sigma2[t-1]
+        returns[t] = rng.normal(0, np.sqrt(max(sigma2[t], 1e-12)))
+
+    return returns
+
+
+def main():
+    print("=" * 60)
+    print("  FINANCIAL VOLATILITY REGIME DETECTION")
+    print("  GARCH(1,1) Analysis with Sigma-C")
+    print("=" * 60)
+
+    fin = Universe.finance()
+
+    # Scenario 1: Calm market (low persistence)
+    print("\n--- Scenario 1: Calm Market ---")
+    calm_returns = generate_garch_returns(
+        n=2000, omega=1e-6, alpha=0.05, beta=0.70, seed=42
+    )
+    calm = fin.analyze_volatility_clustering(calm_returns)
+    print(f"  GARCH params:  omega={calm['omega']:.2e}, alpha={calm['alpha']:.3f}, beta={calm['beta']:.3f}")
+    print(f"  Persistence:   {calm['persistence']:.3f}  (alpha + beta)")
+    print(f"  Sigma-C:       {calm['sigma_c']:.4f}")
+    print(f"  Regime:        {'Critical' if calm['persistence'] > 0.95 else 'Stable'}")
+
+    # Scenario 2: Pre-crisis market (high persistence)
+    print("\n--- Scenario 2: Pre-Crisis Market ---")
+    crisis_returns = generate_garch_returns(
+        n=2000, omega=1e-7, alpha=0.12, beta=0.87, seed=123
+    )
+    crisis = fin.analyze_volatility_clustering(crisis_returns)
+    print(f"  GARCH params:  omega={crisis['omega']:.2e}, alpha={crisis['alpha']:.3f}, beta={crisis['beta']:.3f}")
+    print(f"  Persistence:   {crisis['persistence']:.3f}  (alpha + beta)")
+    print(f"  Sigma-C:       {crisis['sigma_c']:.4f}")
+    print(f"  Regime:        {'Critical' if crisis['persistence'] > 0.95 else 'Stable'}")
+
+    # Hurst exponent analysis
+    print("\n--- Hurst Exponent Analysis ---")
+    hurst_calm = fin.compute_hurst_exponent(calm_returns)
+    hurst_crisis = fin.compute_hurst_exponent(crisis_returns)
+    print(f"  Calm market:   H = {hurst_calm['hurst']:.3f}  ({hurst_calm['regime']})")
+    print(f"  Crisis market: H = {hurst_crisis['hurst']:.3f}  ({hurst_crisis['regime']})")
+    print(f"    H < 0.5: mean-reverting | H = 0.5: random walk | H > 0.5: trending")
+
+    # Summary
+    print("\n" + "-" * 60)
+    print("  SUMMARY")
+    print("-" * 60)
+    print(f"  The pre-crisis market shows persistence {crisis['persistence']:.3f} vs {calm['persistence']:.3f}")
+    print(f"  for the calm market. As persistence -> 1.0, volatility shocks")
+    print(f"  persist indefinitely (criticality). Sigma-C quantifies this")
+    print(f"  transition with a single number.\n")
+
 
 if __name__ == "__main__":
     main()

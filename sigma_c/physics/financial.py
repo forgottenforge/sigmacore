@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import numpy as np
 from .rigorous import RigorousTheoreticalCheck
 
@@ -61,7 +61,6 @@ class RigorousFinancialSigmaC(RigorousTheoreticalCheck):
         # Simple volatility clustering check: autocorrelation of squared returns
         if len(returns) > 10:
             squared_returns = returns**2
-            mean_sq = np.mean(squared_returns)
             autocorr = np.corrcoef(squared_returns[:-1], squared_returns[1:])[0, 1]
             has_clustering = autocorr > 0.1
         else:
@@ -85,12 +84,17 @@ class RigorousFinancialSigmaC(RigorousTheoreticalCheck):
             return 0.0
         
         # Discretize returns into bins for entropy calculation
-        hist, _ = np.histogram(returns, bins=20, density=True)
-        hist = hist[hist > 0]  # Remove zero bins
-        
+        hist, _ = np.histogram(returns, bins=20, density=False)
+        # Convert counts to probabilities
+        total = hist.sum()
+        if total == 0:
+            return 0.0
+        probs = hist / total
+        probs = probs[probs > 0]  # Remove zero-probability bins
+
         # Shannon entropy
-        entropy = -np.sum(hist * np.log(hist + 1e-10))
-        
+        entropy = -np.sum(probs * np.log(probs))
+
         # Normalize to [0, 1] range (log(20) is max for 20 bins)
         normalized_entropy = entropy / np.log(20)
         

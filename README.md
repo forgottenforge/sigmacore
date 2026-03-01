@@ -1,127 +1,140 @@
-# Sigma-C Framework v2.0.2 "Rigorous Control"
+# Sigma-C Framework v2.0.3
 
-Universal Criticality Analysis & Active Control System
+**Universal Criticality Analysis & Active Control System**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-2.0.2-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-2.0.3-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
-## 🚀 Overview
+## Overview
 
-Sigma-C v2.0.2 is a rigorous active control system that detects, analyzes, and maintains critical points across quantum, GPU, financial, climate, and ML systems.
+Sigma-C is a framework for detecting and analyzing **critical phase transitions** across physical, computational, and data-driven systems. It provides a unified susceptibility-based approach: sweep a control parameter, compute the response function (susceptibility), and locate the critical point where the system transitions between qualitatively different regimes.
 
-**New in v2.0.2**: **Rigor Refinement** - Enhanced numerical stability, AI safety constraints, and statistical significance testing.
+The core idea is simple: for any system with a tunable parameter and a measurable observable, the susceptibility `chi = dO/d(epsilon)` peaks at the critical point `sigma_c`. The sharpness of that peak (`kappa`) quantifies how pronounced the transition is.
 
-## ✨ What's New in v2.0.2
+### Peer-Reviewed Application
 
-### Core Features
+The methodology behind Sigma-C has been validated in a peer-reviewed publication:
+
+> **"Operational scale detection in quantum magnetism"**
+> AVS Quantum Science, Volume 8, Issue 1, Article 013804 (2026)
+> [https://doi.org/10.1116/5.0254846](https://doi.org/10.1116/5.0254846)
+
+This paper demonstrates the framework's application to **quantum computing on real hardware** (Rigetti Ankaa-3), where Sigma-C successfully identifies the critical noise threshold at which quantum algorithms lose their advantage over classical computation. The detected critical point (`sigma_c = 0.070 +/- 0.009`) and correlation length (`xi_c = 8.00 +/- 0.50 qubits`) are consistent with theoretical predictions from quantum error correction theory.
+
+## Core Capabilities
+
+- **Susceptibility Analysis**: Detect critical points via `chi = dO/d(epsilon)` with Gaussian kernel smoothing
+- **Active Control**: PID controller to maintain systems at or near critical points
+- **Streaming Computation**: O(1) real-time susceptibility updates using Welford's algorithm
 - **Observable Discovery**: Automatic identification of optimal order parameters
 - **Multi-Scale Analysis**: Wavelet-based criticality detection across scales
-- **Active Control**: PID controller for critical point maintenance
-- **Streaming Calculation**: O(1) real-time susceptibility updates (Welford's Algorithm)
+- **Statistical Rigor**: Jonckheere-Terpstra trend tests, isotonic regression with bootstrap CI
+- **High-Performance Core**: Optional C++ backend via pybind11
 
-### New Domains
-- **Climate**: Mesoscale boundary detection
-- **Seismic**: Gutenberg-Richter analysis with Significance Testing
-- **Magnetic**: Critical exponents validation
-- **Edge Computing**: Power efficiency optimization
-- **LLM Cost**: Model selection via Pareto frontier with Safety Constraints
+## Domain Adapters
 
-### 🔌 Universal Connectivity
-- **Quantum**: Qiskit, PennyLane, Cirq, AWS Braket
-- **ML**: PyTorch, JAX, TensorFlow
-- **Finance**: QuantLib, Zipline
-- **DevOps**: Kubernetes, GitHub Actions, Grafana
-- **Web**: REST API, GraphQL, WebAssembly
+| Domain | Adapter | Key Methods |
+|--------|---------|-------------|
+| Quantum | `QuantumAdapter` | Noise sweep, depth scaling, idle sensitivity, Fisher information |
+| GPU/HPC | `GPUAdapter` | Cache transition detection, roofline analysis, thermal throttling |
+| Finance | `FinancialAdapter` | Hurst exponent, GARCH(1,1) volatility, order flow imbalance |
+| Climate | `ClimateAdapter` | Mesoscale boundary detection, vertical stability analysis |
+| Seismic | `SeismicAdapter` | Gutenberg-Richter b-value, Omori aftershock scaling |
+| Magnetic | `MagneticAdapter` | Critical exponents (beta, gamma, alpha), finite size scaling |
+| ML | `MLAdapter` | Training robustness, learning rate sensitivity |
+| Edge/IoT | `EdgeAdapter` | Power efficiency phase transitions |
+| LLM Cost | `LLMCostAdapter` | Cost-quality Pareto frontier analysis |
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Core framework
 pip install sigma-c-framework
 
-# With all integrations
-pip install sigma-c-framework[all]
+# With quantum integrations
+pip install sigma-c-framework[quantum]
 
-# Specific integrations
-pip install sigma-c-framework[quantum]   # Qiskit, PennyLane
-pip install sigma-c-framework[ml]        # PyTorch, JAX
-pip install sigma-c-framework[devops]    # K8s, Grafana
+# With ML integrations
+pip install sigma-c-framework[ml]
 ```
 
-## 🔧 Quick Start
+## Quick Start
 
-### Quantum (Qiskit)
+### Detecting a Phase Transition (Ising Model)
+
 ```python
-from qiskit import QuantumCircuit
-from sigma_c.connectors.qiskit import QiskitSigmaC
+import numpy as np
+from sigma_c import Universe
 
-circuit = QuantumCircuit(3)
-circuit.h(0)
-circuit.cx(0, 1)
+# Generate synthetic magnetization data across temperatures
+temperatures = np.linspace(1.5, 3.5, 50)
+# Simulate mean-field magnetization: M ~ (Tc - T)^0.125
+Tc = 2.269  # Exact 2D Ising critical temperature
+magnetization = np.where(
+    temperatures < Tc,
+    np.abs(Tc - temperatures)**0.125,
+    0.01 * np.random.randn(np.sum(temperatures >= Tc))
+)
 
-# Automatic criticality analysis
-result = QiskitSigmaC.analyze(circuit)
-print(f"σ_c = {result['sigma_c']:.4f}")
+# Find the critical point using susceptibility analysis
+mag = Universe.magnetic()
+result = mag.compute_susceptibility(temperatures, magnetization)
+
+print(f"Detected Tc:    {result['sigma_c']:.3f}")
+print(f"Theoretical Tc: {Tc}")
+print(f"Peak sharpness: {result['kappa']:.1f}")
 ```
 
-### Machine Learning (PyTorch)
+### Quantum Noise Threshold Detection
+
 ```python
-from sigma_c.ml.pytorch import CriticalModule, SigmaCLoss
+import numpy as np
+from sigma_c import Universe
 
-class MyNet(CriticalModule):
-    def forward(self, x):
-        return self.critical_forward(x)  # Auto σ_c tracking
+qpu = Universe.quantum(device='simulator')
+result = qpu.run_optimization(
+    circuit_type='grover',
+    epsilon_values=np.linspace(0.0, 0.25, 20),
+    shots=1000
+)
 
-criterion = SigmaCLoss(lambda_critical=0.1)
+print(f"Critical noise level: {result['sigma_c']:.4f}")
+print(f"Peak clarity (kappa): {result['kappa']:.1f}")
+# Above sigma_c, Grover's algorithm loses quantum advantage
 ```
 
-### Universal Bridge (Any Framework)
+### Financial Volatility Regime Detection
+
 ```python
-from sigma_c.connectors.bridge import SigmaCBridge
+import numpy as np
+from sigma_c import Universe
 
-@SigmaCBridge.wrap_any_function
-def my_function(x):
-    return x ** 2
+fin = Universe.finance()
+returns = np.random.randn(1000) * 0.02  # Simulated daily returns
 
-result = my_function(5)
-print(result.__sigma_c__)  # Criticality metadata
+# GARCH(1,1) volatility clustering analysis
+garch = fin.analyze_volatility_clustering(returns)
+print(f"Persistence: {garch['persistence']:.3f}")
+print(f"Regime:      {'Critical' if garch['persistence'] > 0.95 else 'Stable'}")
 ```
 
-### DevOps (Kubernetes)
-```yaml
-apiVersion: sigma-c.io/v1
-kind: CriticalityMonitor
-metadata:
-  name: app-monitor
-spec:
-  target:
-    app: my-app
-  thresholds:
-    cpu: 0.8
-  actions:
-    scale: true
-```
+## Integrations
 
-## 📚 Documentation
+- **Quantum**: Qiskit, PennyLane, Cirq, AWS Braket
+- **ML**: PyTorch, JAX, TensorFlow
+- **Monitoring**: Grafana, Kubernetes
+- **Reporting**: LaTeX, publication-quality plots
 
-- **[Integrations Guide](docs/INTEGRATIONS.md)** - All 22+ integrations
-- **[API Reference](docs/API_REFERENCE_v2.0.md)** - Complete API docs
-- **[Release Notes](docs/releases/RELEASE_NOTES_v2.0.2.md)** - What's new in v2.0.2
-- **[Examples](examples_v4/)** - Code examples
+## Documentation
 
-## 🎯 Use Cases
+- [API Reference](docs/API_REFERENCE_v2.0.md)
+- [Release Notes](docs/releases/RELEASE_NOTES_v2.0.2.md)
+- [Examples](examples/v4/)
 
-- **Quantum Computing**: Optimize circuits for NISQ devices
-- **GPU/HPC**: Detect cache transitions, thermal throttling
-- **Finance**: Predict market crashes, optimize portfolios
-- **ML**: Train robust models, detect overfitting
-- **Climate**: Identify mesoscale boundaries
-- **Edge/IoT**: Optimize power efficiency
+## License
 
-## 🛡️ License
-
-**Open Source**: AGPL-3.0-or-later  
+**Open Source**: AGPL-3.0-or-later
 **Commercial**: Contact [nfo@forgottenforge.xyz](mailto:nfo@forgottenforge.xyz)
 
-Copyright © 2025 ForgottenForge.xyz
+Copyright (c) 2025 ForgottenForge.xyz

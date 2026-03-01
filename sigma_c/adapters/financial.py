@@ -150,7 +150,7 @@ class FinancialAdapter(SigmaCAdapter):
             return {'best_params': {}, 'all_results': results, 'convergence_data': {}, 'recommendation': 'No successful runs'}
         
         best = max(successful, key=lambda x: x['kappa'])
-        return {'best_params': {'lookback': best['lookback']}, 'all_results': results, 'convergence_data': {'n_successful': len(successful), 'n_failed': len(results) - len(successful)}, 'recommendation': f"Use lookback={best['lookback']} (κ={best['kappa']:.2f})"}
+        return {'best_params': {'lookback': best['lookback']}, 'all_results': results, 'convergence_data': {'n_successful': len(successful), 'n_failed': len(results) - len(successful)}, 'recommendation': f"Use lookback={best['lookback']} (kappa={best['kappa']:.2f})"}
     
     def _domain_specific_validate(self, price_data: Optional[pd.Series] = None, **kwargs) -> Dict[str, bool]:
         """Validate financial techniques."""
@@ -161,7 +161,7 @@ class FinancialAdapter(SigmaCAdapter):
     
     def _domain_specific_explain(self, result: Dict[str, Any], **kwargs) -> str:
         """Financial-specific explanation."""
-        return f"# Financial Regime Analysis\n\nσ_c: {result.get('sigma_c', 'N/A')}\nκ: {result.get('kappa', 'N/A')}\n\nLower σ_c = more frequent regime changes\nHigher κ = sharper transitions"
+        return f"# Financial Regime Analysis\n\nsigma_c: {result.get('sigma_c', 'N/A')}\nkappa: {result.get('kappa', 'N/A')}\n\nLower sigma_c = more frequent regime changes\nHigher kappa = sharper transitions"
 
     # ========================================================================
     # v1.2.0: Universal Rigor Integration
@@ -293,12 +293,13 @@ class FinancialAdapter(SigmaCAdapter):
                           bounds=bounds, method='L-BFGS-B')
             omega, alpha, beta = res.x
             persistence = alpha + beta
-        except:
+        except Exception:
             omega, alpha, beta, persistence = 0, 0, 0, 0
             
         # Sigma_c in this context relates to the persistence of volatility shocks
         # As persistence -> 1, shocks last forever (criticality)
-        sigma_c_garch = 1.0 / (1.0 + (1.0 - persistence)) # Maps 1->1, 0->0.5
+        persistence = min(persistence, 0.999)
+        sigma_c_garch = 1.0 / (1.0 + (1.0 - persistence))
         
         return {
             'omega': omega,
@@ -321,7 +322,9 @@ class FinancialAdapter(SigmaCAdapter):
         # Detect structural breaks in OFI trend
         # We look for super-diffusive behavior: <x^2> ~ t^gamma with gamma > 1
         
-        lags = np.unique(np.logspace(0.5, np.log10(len(cofi)//4), 10).astype(int))
+        max_lag = max(2, len(cofi) // 4)
+        lags = np.unique(np.logspace(0.5, np.log10(max_lag), 10).astype(int))
+        lags = lags[lags >= 1]
         msd = [] # Mean Squared Displacement
         
         for tau in lags:

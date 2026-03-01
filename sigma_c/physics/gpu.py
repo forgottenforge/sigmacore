@@ -8,7 +8,7 @@ Copyright (c) 2025 ForgottenForge.xyz. All rights reserved.
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import numpy as np
 from .rigorous import RigorousTheoreticalCheck
 
@@ -25,6 +25,7 @@ class RigorousGPUSigmaC(RigorousTheoreticalCheck):
     """
     
     def __init__(self):
+        super().__init__()
         self.nvml_initialized = False
         if _HAS_NVML:
             try:
@@ -151,30 +152,46 @@ class RigorousGPUSigmaC(RigorousTheoreticalCheck):
 
     def check_scaling_laws(self, data: Any, param_range: List[float], **kwargs) -> Dict[str, Any]:
         """
-        Simple scaling law check for GPU.
-        Toy model: sigma_c scales inversely with arithmetic intensity.
+        Scaling law check for GPU.
+        Expects ``data`` to contain a 'sigma_c_values' list measured at
+        each arithmetic intensity in ``param_range``.  Falls back to the
+        Roofline-derived model ``sigma_c = ridge / (AI + ridge)`` when
+        measured values are unavailable.
         """
         if not param_range or len(param_range) < 2:
             return {'status': 'insufficient_data'}
-        
-        # Toy model: assume sigma_c ~ 1 / arithmetic_intensity^alpha
-        intensities = np.array(param_range)
-        sigma_c_values = 1.0 / (intensities + 1e-10)
-        
-        # Fit power law: sigma_c = a * intensity^b
-        log_intensities = np.log(intensities + 1e-10)
-        log_sigma = np.log(sigma_c_values + 1e-10)
-        
-        # Linear fit in log space
-        coeffs = np.polyfit(log_intensities, log_sigma, 1)
-        exponent = coeffs[0]
-        
-        return {
-            'status': 'completed',
-            'scaling_exponent': float(exponent),
-            'model': 'power_law',
-            'theory': 'Roofline scaling'
-        }
+
+        intensities = np.array(param_range, dtype=float)
+
+        # Use measured sigma_c values when available
+        sigma_c_values = None
+        if isinstance(data, dict):
+            sigma_c_values = data.get('sigma_c_values', None)
+
+        if sigma_c_values is not None and len(sigma_c_values) == len(intensities):
+            sigma = np.array(sigma_c_values, dtype=float)
+        else:
+            # Roofline-derived model as fallback
+            peak_flops = data.get('peak_flops', 1000.0) if isinstance(data, dict) else 1000.0
+            peak_bw = data.get('peak_bandwidth', 500.0) if isinstance(data, dict) else 500.0
+            ridge = peak_flops / peak_bw
+            sigma = ridge / (intensities + ridge)
+
+        # Fit power law in log-log space: log(sigma) = b*log(AI) + log(a)
+        try:
+            log_intensities = np.log(intensities)
+            log_sigma = np.log(sigma + 1e-12)
+            coeffs = np.polyfit(log_intensities, log_sigma, 1)
+            exponent = coeffs[0]
+
+            return {
+                'status': 'completed',
+                'scaling_exponent': float(exponent),
+                'model': 'power_law',
+                'theory': 'Roofline scaling',
+            }
+        except Exception:
+            return {'status': 'fit_failed', 'theory': 'Roofline scaling'}
 
     def quantify_resource(self, data: Any) -> float:
         """

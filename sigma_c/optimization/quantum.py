@@ -7,7 +7,7 @@ Copyright (c) 2025 ForgottenForge.xyz
 Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 import numpy as np
 from .universal import UniversalOptimizer, OptimizationResult
 from ..adapters.quantum import QuantumAdapter
@@ -75,7 +75,7 @@ class BalancedQuantumOptimizer(UniversalOptimizer):
         return system
 
     def optimize_circuit(self, 
-                        circuit_factory: callable, 
+                        circuit_factory: Callable,
                         param_space: Dict[str, List[Any]],
                         strategy: str = 'brute_force') -> OptimizationResult:
         """

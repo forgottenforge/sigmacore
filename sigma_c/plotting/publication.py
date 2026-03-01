@@ -10,7 +10,6 @@ import matplotlib.gridspec as gridspec
 from matplotlib import rcParams
 import numpy as np
 from typing import Dict, Any, List, Optional, Tuple
-import os
 
 class PublicationVisualizer:
     """

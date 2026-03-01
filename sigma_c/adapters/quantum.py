@@ -514,7 +514,7 @@ class QuantumAdapter(SigmaCAdapter):
                 'n_successful': len(successful),
                 'n_failed': len(results) - len(successful)
             },
-            'recommendation': f"Use epsilon={best['epsilon']:.4f}, idle_frac={best['idle_frac']:.2f} for κ={best['kappa']:.2f}"
+            'recommendation': f"Use epsilon={best['epsilon']:.4f}, idle_frac={best['idle_frac']:.2f} for kappa={best['kappa']:.2f}"
         }
     
     def _domain_specific_validate(self, circuit: Circuit, **kwargs) -> Dict[str, bool]:
@@ -546,21 +546,21 @@ class QuantumAdapter(SigmaCAdapter):
         explanation = f"""
 # Quantum Circuit Analysis Results
 
-**Critical Noise Level (σ_c):** {sigma_c}  
-**Criticality Score (κ):** {kappa}
+**Critical Noise Level (sigma_c):** {sigma_c}
+**Criticality Score (kappa):** {kappa}
 
 ## Quantum-Specific Interpretation
 
-### Critical Noise Level (σ_c)
+### Critical Noise Level (sigma_c)
 - Indicates the noise threshold where quantum advantage breaks down
-- Lower σ_c means the circuit is more sensitive to noise
+- Lower sigma_c means the circuit is more sensitive to noise
 - Typical values: 0.01-0.05 for NISQ devices
 
-### Criticality Score (κ)
-- Measures how sharply the circuit transitions at σ_c
-- Higher κ indicates a more pronounced quantum-to-classical transition
-- κ > 15: Strong quantum advantage region
-- κ < 5: Gradual degradation (may need error mitigation)
+### Criticality Score (kappa)
+- Measures how sharply the circuit transitions at sigma_c
+- Higher kappa indicates a more pronounced quantum-to-classical transition
+- kappa > 15: Strong quantum advantage region
+- kappa < 5: Gradual degradation (may need error mitigation)
 
 ## Recommendations
 
@@ -619,14 +619,14 @@ class QuantumAdapter(SigmaCAdapter):
         recs = []
         
         if kappa < 5:
-            recs.append("- **Low κ:** Consider error mitigation or circuit optimization")
+            recs.append("- **Low kappa:** Consider error mitigation or circuit optimization")
         elif kappa > 15:
-            recs.append("- **High κ:** Strong quantum advantage - good circuit design!")
-        
+            recs.append("- **High kappa:** Strong quantum advantage - good circuit design!")
+
         if sigma_c < 0.02:
-            recs.append("- **Low σ_c:** Circuit is noise-sensitive - use error correction")
+            recs.append("- **Low sigma_c:** Circuit is noise-sensitive - use error correction")
         elif sigma_c > 0.08:
-            recs.append("- **High σ_c:** Circuit is noise-resilient - good for NISQ devices")
+            recs.append("- **High sigma_c:** Circuit is noise-resilient - good for NISQ devices")
         
         if not recs:
             recs.append("- Results look reasonable - proceed with full analysis")
@@ -668,10 +668,11 @@ class QuantumAdapter(SigmaCAdapter):
         Validate a sigma_c result against rigorous quantum bounds.
         """
         from ..physics.quantum import RigorousQuantumSigmaC
-        
+
         checker = RigorousQuantumSigmaC()
         context = {'n_qubits': n_qubits}
-        
+        return checker.validate_sigma_c(sigma_c_value, context)
+
     # ========== v2.0: Rigorous Physics Implementation ==========
 
     def analyze_depth_scaling(self, circuit_factory: Callable, max_depth: int = 20) -> Dict[str, float]:
@@ -781,8 +782,8 @@ class QuantumAdapter(SigmaCAdapter):
         G.add_edges_from(coupling_map)
         try:
             diameter = nx.diameter(G)
-        except:
-            diameter = n_qubits # Disconnected or fallback
+        except Exception:
+            diameter = n_qubits
             
         # At criticality, correlation length scales with system size (finite size scaling)
         xi_c = 0.4 * diameter # Empirical factor
