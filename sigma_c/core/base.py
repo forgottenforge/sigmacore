@@ -22,13 +22,13 @@ class SigmaCAdapter(ABC):
     
     Version 1.0.0: Basic susceptibility computation
     Version 1.1.0: Added universal diagnostics system
-    Version 2.0.3: Production Hardening
+    Version 2.1.0: Full Feature Implementation
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.engine = Engine()
-        self._version = "2.0.3"
+        self._version = "2.1.0"
     
     @abstractmethod
     def get_observable(self, data: Any, **kwargs) -> float:

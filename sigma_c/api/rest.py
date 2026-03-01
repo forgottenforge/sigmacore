@@ -90,7 +90,7 @@ class SigmaCAPI:
         app = FastAPI(
             title="Sigma-C API",
             description="Critical susceptibility analysis API",
-            version="2.0.0"
+            version="2.1.0"
         )
         
         @app.post("/analyze", response_model=AnalysisResponse)
@@ -107,7 +107,7 @@ class SigmaCAPI:
         @app.get("/health")
         async def health():
             """Health check endpoint."""
-            return {"status": "healthy", "version": "2.0.0"}
+            return {"status": "healthy", "version": "2.1.0"}
         
         return app
 
