@@ -60,19 +60,38 @@ def pool_adjacent_violators(y, weights=None, increasing=True):
 def jonckheere_terpstra_test(values, groups):
     """
     Jonckheere-Terpstra test for ordered alternatives.
+
+    Args:
+        values: Array of observed values.
+        groups: Array of group labels (same length as values), defining
+                which group each observation belongs to. Groups are compared
+                in sorted order of their unique labels.
     """
-    n_groups = len(values)
+    values = np.asarray(values)
+    groups = np.asarray(groups)
+
+    # Split values into groups, ordered by unique group labels
+    unique_groups = np.sort(np.unique(groups))
+    grouped_values = [values[groups == g] for g in unique_groups]
+
+    n_groups = len(grouped_values)
     S = 0
     for i in range(n_groups):
-        for j in range(i+1, n_groups):
-            if values[j] < values[i]:
-                S += 1
-            elif values[j] > values[i]:
-                S -= 1
-                
-    n = n_groups
-    var_S = n * (n - 1) * (2 * n + 5) / 18
-    
+        for j in range(i + 1, n_groups):
+            for xi in grouped_values[i]:
+                for xj in grouped_values[j]:
+                    if xj > xi:
+                        S += 1
+                    elif xj < xi:
+                        S -= 1
+
+    # Total number of observations
+    n = len(values)
+    n_k = [len(g) for g in grouped_values]
+
+    # Variance under the null hypothesis
+    var_S = (n ** 2 * (2 * n + 3) - sum(nk ** 2 * (2 * nk + 3) for nk in n_k)) / 18
+
     if var_S == 0:
         z = 0
         p_value = 0.5
@@ -84,7 +103,7 @@ def jonckheere_terpstra_test(values, groups):
         else:
             z = 0
         p_value = stats.norm.sf(abs(z))
-        
+
     return {
         'statistic': S,
         'z_score': z,
@@ -103,19 +122,17 @@ def isotonic_regression_with_ci(x, y, n_bootstrap=1000, increasing=False):
     
     for i in range(n_bootstrap):
         idx = np.random.choice(n_points, n_points, replace=True)
+        boot_x = x[idx]
         boot_y = y[idx]
-        # Sort x to maintain order assumption for PAV
-        # Note: This is a simplified bootstrap for isotonic regression
-        # strictly speaking we should resample (x,y) pairs and re-sort by x
-        
-        # Correct approach: resample residuals or pairs
-        # Here we use simple pair resampling but we must sort by x for PAV
-        sorted_idx = np.argsort(x[idx])
+        # Resample (x, y) pairs and re-sort by x for PAV
+        sorted_idx = np.argsort(boot_x)
+        boot_x_sorted = boot_x[sorted_idx]
         boot_y_sorted = boot_y[sorted_idx]
-        
+
         try:
             boot_fit = pool_adjacent_violators(boot_y_sorted, increasing=increasing)
-            bootstrap_fits[i] = boot_fit
+            # Interpolate bootstrap fit back onto the original x grid
+            bootstrap_fits[i] = np.interp(x, boot_x_sorted, boot_fit)
         except:
             bootstrap_fits[i] = iso_fit
             

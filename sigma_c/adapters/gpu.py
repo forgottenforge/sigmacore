@@ -12,7 +12,7 @@ For commercial licensing without AGPL-3.0 obligations, contact:
 SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
 from ..core.base import SigmaCAdapter
-from ..stats import jonckheere_terpstra_test, isotonic_regression_with_ci, pool_adjacent_violators
+from ..stats import jonckheere_terpstra_test, isotonic_regression_with_ci
 import numpy as np
 import time
 from typing import Any, Dict, List, Optional
@@ -36,7 +36,8 @@ class GPUAdapter(SigmaCAdapter):
         self._peak_bandwidth = None
         
         if not _HAS_CUPY:
-            print("⚠️ CuPy not found. GPU adapter running in simulation mode.")
+            import warnings
+            warnings.warn("CuPy not found. GPU adapter running in simulation mode.")
         else:
             self._detect_gpu_specs()
             self._warmup()
@@ -111,13 +112,17 @@ class GPUAdapter(SigmaCAdapter):
         _ = cp.dot(A, B)
         cp.cuda.runtime.deviceSynchronize()
             
-    def get_observable(self, data: np.ndarray, **kwargs) -> float:
+    def get_observable(self, data: np.ndarray, **kwargs):
         """
         Compute performance degradation observable.
+        Returns a scalar float for single values, or an ndarray for arrays.
         """
-        # data is assumed to be GFLOPS
+        data = np.asarray(data, dtype=np.float64)
         perf_norm = data / (np.max(data) + 1e-10)
-        return 1.0 - perf_norm
+        result = 1.0 - perf_norm
+        if result.ndim == 0:
+            return float(result)
+        return result
 
     def run_benchmark(self, size=1024, n_launch=10, n_mem=0):
         """
@@ -366,7 +371,7 @@ class GPUAdapter(SigmaCAdapter):
         try:
             data = np.array([100, 90, 80, 70])
             obs = self.get_observable(data)
-            tests['observable_computation'] = isinstance(obs, (float, np.floating))
+            tests['observable_computation'] = isinstance(obs, (float, np.floating, np.ndarray))
         except Exception:
             tests['observable_computation'] = False
             
@@ -383,15 +388,15 @@ class GPUAdapter(SigmaCAdapter):
 GPU Kernel Analysis Results:
 ============================
 
-Critical Point (σ_c): {sigma_c:.3f}
-This represents the workload intensity threshold where GPU performance 
+Critical Point (sigma_c): {sigma_c:.3f}
+This represents the workload intensity threshold where GPU performance
 begins to degrade significantly due to cache thrashing and memory pressure.
 
-Criticality Exponent (κ): {kappa:.2f}
+Criticality Exponent (kappa): {kappa:.2f}
 This quantifies how sharply performance degrades near the critical point.
-- κ < 1.0: Gradual degradation (good cache behavior)
-- κ ≈ 2.0: Moderate degradation (typical for GEMM kernels)
-- κ > 3.0: Sharp degradation (cache thrashing)
+- kappa < 1.0: Gradual degradation (good cache behavior)
+- kappa ~ 2.0: Moderate degradation (typical for GEMM kernels)
+- kappa > 3.0: Sharp degradation (cache thrashing)
 
 Interpretation:
 """
@@ -543,7 +548,7 @@ Interpretation:
             'peak_gflops': self._peak_flops,
             'peak_bandwidth_gbs': self._peak_bandwidth,
             'ridge_point': ai_ridge,
-            'regime': 'compute_bound' if ai_ridge < 10 else 'memory_bound' # Heuristic
+            'regime': 'memory_bound' if ai_ridge > 10 else 'compute_bound'
         }
 
     def predict_thermal_throttling(self, current_temp: float) -> float:

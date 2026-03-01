@@ -3,7 +3,7 @@ Sigma-C Universal Bridge
 =========================
 Copyright (c) 2025 ForgottenForge.xyz
 
-Universal wrapper that makes ANY function criticality-aware.
+Universal wrapper that makes a given function criticality-aware.
 """
 
 import functools
@@ -14,7 +14,7 @@ import numpy as np
 
 class SigmaCBridge:
     """
-    Universal adapter for ANY framework.
+    Universal adapter for a given framework.
     
     Usage:
         from sigma_c.connectors.bridge import SigmaCBridge
@@ -31,7 +31,7 @@ class SigmaCBridge:
     @staticmethod
     def wrap_any_function(func: Callable) -> Callable:
         """
-        Makes ANY function sigma_c-aware.
+        Makes a function sigma_c-aware.
         
         Args:
             func: Any callable

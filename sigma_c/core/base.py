@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 """
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import Dict, Any, Optional, Union, List, Callable
+from typing import Dict, Any, Optional
 from .engine import Engine
 
 class SigmaCAdapter(ABC):
@@ -22,13 +22,13 @@ class SigmaCAdapter(ABC):
     
     Version 1.0.0: Basic susceptibility computation
     Version 1.1.0: Added universal diagnostics system
-    Version 2.0.2: Rigor Refinement (Stability & Safety)
+    Version 2.0.3: Production Hardening
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.engine = Engine()
-        self._version = "2.0.2"  # Track adapter version
+        self._version = "2.0.3"
     
     @abstractmethod
     def get_observable(self, data: Any, **kwargs) -> float:
@@ -67,7 +67,12 @@ class SigmaCAdapter(ABC):
             }
         """
         # Call domain-specific diagnostics
-        domain_diag = self._domain_specific_diagnose(data, **kwargs)
+        # Pass data as positional only if provided, to avoid conflicts
+        # with domain-specific parameter names (e.g., price_data, catalog)
+        if data is not None:
+            domain_diag = self._domain_specific_diagnose(data, **kwargs)
+        else:
+            domain_diag = self._domain_specific_diagnose(**kwargs)
         
         return {
             'status': domain_diag.get('status', 'ok'),
@@ -95,7 +100,10 @@ class SigmaCAdapter(ABC):
             }
         """
         # Domain-specific implementation
-        return self._domain_specific_auto_search(data, param_ranges, **kwargs)
+        if data is not None:
+            return self._domain_specific_auto_search(data, param_ranges, **kwargs)
+        else:
+            return self._domain_specific_auto_search(param_ranges=param_ranges, **kwargs)
     
     def validate_techniques(self, data: Any = None, **kwargs) -> Dict[str, Any]:
         """
@@ -109,7 +117,10 @@ class SigmaCAdapter(ABC):
                 'details': Dict[str, Any]
             }
         """
-        checks = self._domain_specific_validate(data, **kwargs)
+        if data is not None:
+            checks = self._domain_specific_validate(data, **kwargs)
+        else:
+            checks = self._domain_specific_validate(**kwargs)
         failed = [k for k, v in checks.items() if not v]
         
         return {
@@ -133,7 +144,7 @@ class SigmaCAdapter(ABC):
     
     # ========== Domain-Specific Hooks (Override in subclasses) ==========
     
-    def _domain_specific_diagnose(self, data: Any, **kwargs) -> Dict[str, Any]:
+    def _domain_specific_diagnose(self, data: Any = None, **kwargs) -> Dict[str, Any]:
         """Override in subclass for domain-specific diagnostics."""
         return {
             'status': 'ok',
@@ -142,8 +153,8 @@ class SigmaCAdapter(ABC):
             'auto_fix': None,
             'details': {}
         }
-    
-    def _domain_specific_auto_search(self, data: Any, param_ranges: Optional[Dict], **kwargs) -> Dict[str, Any]:
+
+    def _domain_specific_auto_search(self, data: Any = None, param_ranges: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
         """Override in subclass for domain-specific parameter search."""
         return {
             'best_params': {},
@@ -152,7 +163,7 @@ class SigmaCAdapter(ABC):
             'recommendation': 'No auto-search implemented for this domain'
         }
     
-    def _domain_specific_validate(self, data: Any, **kwargs) -> Dict[str, bool]:
+    def _domain_specific_validate(self, data: Any = None, **kwargs) -> Dict[str, bool]:
         """Override in subclass for domain-specific validation."""
         return {'basic_validation': True}
     
@@ -164,13 +175,13 @@ class SigmaCAdapter(ABC):
         explanation = f"""
 # Sigma-C Analysis Results
 
-**Critical Scale (σ_c):** {sigma_c}  
-**Criticality Score (κ):** {kappa}
+**Critical Scale (sigma_c):** {sigma_c}
+**Criticality Score (kappa):** {kappa}
 
 ## Interpretation
-- σ_c indicates the scale where the system transitions
-- Higher κ values suggest stronger critical behavior
-- κ > 10 typically indicates significant criticality
+- sigma_c indicates the scale where the system transitions
+- Higher kappa values suggest stronger critical behavior
+- kappa > 10 typically indicates significant criticality
 
 For domain-specific interpretation, see documentation.
 """

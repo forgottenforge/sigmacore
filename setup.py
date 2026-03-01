@@ -33,7 +33,7 @@ ext_modules = [
 setup(
 
     name="sigma_c_framework",
-    version="2.0.2",
+    version="2.0.3",
     packages=find_packages(),
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},

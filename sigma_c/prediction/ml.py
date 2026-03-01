@@ -1,7 +1,9 @@
 """
 ML Discovery Module
 ===================
-Uses Machine Learning to discover patterns and predict outcomes without measurement.
+Uses Machine Learning to discover patterns and predict critical-point outcomes.
+Prediction models are trained on historical data; actual measurements are still
+needed to supply training labels.
 
 Copyright (c) 2025 ForgottenForge.xyz
 Licensed under the AGPL-3.0-or-later OR Commercial License.
@@ -40,7 +42,7 @@ class MLDiscovery:
 
 class BlindPredictor:
     """
-    Predicts system state without direct measurement (using correlations).
+    Predicts system state from correlated observables (placeholder implementation).
     """
     
     def train(self, historical_data: np.ndarray, targets: np.ndarray):

@@ -9,9 +9,12 @@ Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Callable, Tuple
+from typing import Dict, Any, List, Optional
+import logging
 import numpy as np
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class OptimizationResult:
@@ -163,7 +166,7 @@ class UniversalOptimizer(ABC):
                         cb.on_step_end(self, step, log_entry)
                     
             except Exception as e:
-                # Log failure but continue
+                logger.warning("Parameter evaluation failed for %s: %s", params, e)
                 continue
                 
         return OptimizationResult(
@@ -288,7 +291,7 @@ class UniversalOptimizer(ABC):
             'stability_weight': self.stability_weight
         }
         with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2, default=str)
             
     def load(self, filepath: str):
         """Load optimizer state from JSON."""

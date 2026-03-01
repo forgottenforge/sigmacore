@@ -51,16 +51,17 @@ class GeneticOptimizer:
             
             history.append(best_fitness)
             
-            # Selection (Tournament)
+            # Selection (Tournament) - use already-computed fitness values
+            fitness_map = {id(ind): f for ind, f in zip(population, fitnesses)}
             new_pop = []
             for _ in range(self.pop_size):
                 p1 = random.choice(population)
                 p2 = random.choice(population)
-                parent1 = p1 if fitness_func(p1) > fitness_func(p2) else p2
-                
+                parent1 = p1 if fitness_map[id(p1)] > fitness_map[id(p2)] else p2
+
                 p3 = random.choice(population)
                 p4 = random.choice(population)
-                parent2 = p3 if fitness_func(p3) > fitness_func(p4) else p4
+                parent2 = p3 if fitness_map[id(p3)] > fitness_map[id(p4)] else p4
                 
                 # Crossover
                 child = []

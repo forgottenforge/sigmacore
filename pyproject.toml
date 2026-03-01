@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigma-c-framework"
-version = "2.0.2"
+version = "2.0.3"
 description = "Critical Susceptibility Framework for Quantum, GPU, Financial, Climate, Seismic, and Magnetic analysis"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -56,4 +56,22 @@ Repository = "https://github.com/forgottenforge/sigmacore"
 Issues = "https://github.com/forgottenforge/sigmacore/issues"
 
 [tool.setuptools]
-packages = ["sigma_c", "sigma_c.core", "sigma_c.adapters", "sigma_c.stats"]
+packages = [
+    "sigma_c",
+    "sigma_c.core",
+    "sigma_c.adapters",
+    "sigma_c.stats",
+    "sigma_c.optimization",
+    "sigma_c.physics",
+    "sigma_c.connectors",
+    "sigma_c.ml",
+    "sigma_c.finance",
+    "sigma_c.monitoring",
+    "sigma_c.visualization",
+    "sigma_c.plotting",
+    "sigma_c.reporting",
+    "sigma_c.prediction",
+    "sigma_c.plugins",
+    "sigma_c.api",
+    "sigma_c.beyond",
+]

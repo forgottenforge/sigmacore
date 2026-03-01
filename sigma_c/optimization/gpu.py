@@ -9,7 +9,7 @@ Licensed under the AGPL-3.0-or-later OR Commercial License.
 """
 
 import numpy as np
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Callable
 from .universal import UniversalOptimizer
 
 class BalancedGPUOptimizer(UniversalOptimizer):
@@ -166,8 +166,6 @@ class BalancedGPUOptimizer(UniversalOptimizer):
     
     def optimize_kernel(self, kernel_factory: Callable, param_space: Dict[str, List[Any]], strategy: str = 'brute_force') -> 'OptimizationResult':
         """Optimize GPU kernel using the universal optimizer framework."""
-        from . import OptimizationResult
-        
         # Call the parent class optimize method with correct signature
         result = super().optimize(
             system=kernel_factory,
