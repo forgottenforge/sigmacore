@@ -1,5 +1,41 @@
 # Sigma-C Framework - Version History
 
+## Version 3.0.0 (2026-03-26)
+
+### New Features
+- **Contraction Geometry**: D (contraction diameter) and gamma (contraction ratio) as first-class metrics
+- **Four-Type Classification**: D (Divergent), O (Oscillatory), S (Stable), R (Resonant)
+- **Extended Derivative Estimation**: Configurable derivative methods for susceptibility computation
+- **Formal Validation**: Rigorous mathematical validation of criticality claims
+- **Information Theory**: Shannon entropy and mutual information analysis
+
+### New Domain Adapters
+- **Number Theory**: `NumberTheoryAdapter` with 12-map verification and prime distribution analysis
+- **Protein Stability**: `ProteinAdapter` with TTR/LYZ/GSN/SOD1/PRNP mutation datasets
+- **Linguistics**: `LinguisticsAdapter` with English/German cross-language correlation
+
+### New Modules
+- `core/contraction.py` - Contraction geometry computations
+- `core/classification.py` - Four-type system classification
+- `core/derivatives.py` - Extended derivative estimation
+- `core/validation.py` - Formal validation framework
+- `beyond/information.py` - Information-theoretic analysis
+- `RigorousNumberTheorySigmaC`, `RigorousProteinSigmaC` - Rigorous analysis classes
+- `ProteinInterventionOptimizer` - Protein intervention optimization
+
+### Testing & Demos
+- 85+ new tests across 9 new test modules
+- 7 new demo scripts
+- 7 new documentation files
+
+### Compatibility
+- Fully backward compatible with v2.x
+- 12 domain adapters total (was 9)
+- Engine supports `derivative_method` parameter
+- `Universe` has 3 new factory methods
+
+---
+
 ## Version 1.1.0 (In Development)
 
 ### New Features

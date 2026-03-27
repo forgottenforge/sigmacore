@@ -38,6 +38,9 @@ class AdapterFactory:
                 'magnetic': ('.magnetic', 'MagneticAdapter'),
                 'edge': ('.edge', 'EdgeAdapter'),
                 'llm_cost': ('.llm_cost', 'LLMCostAdapter'),
+                'number_theory': ('.number_theory', 'NumberTheoryAdapter'),
+                'protein': ('.protein', 'ProteinAdapter'),
+                'linguistics': ('.linguistics', 'LinguisticsAdapter'),
             }
             if domain not in _lazy_imports:
                 raise ValueError(f"Unknown domain: {domain}. Available: {list(_lazy_imports.keys())}")
