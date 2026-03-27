@@ -188,6 +188,47 @@ print(f"Sigma_c: {result.sigma_c_after}")
 - **Stability**: Tipping point threshold (sigma_c)
 - **Theory**: Dynamical systems, bifurcation theory
 
+## v3.0: Adding Contraction Geometry Support
+
+Version 3.0 introduces contraction geometry analysis (D, gamma, sigma product). When creating a new domain adapter, you can add support for this analytical layer to explain *why* your system converges or diverges.
+
+### Computing D and gamma for a New Domain
+
+Each domain needs to define how contraction defect and drift are measured:
+
+- **Contraction defect D**: The ratio of input-space size to output-space size under your domain's map. $D > 1$ means the map is non-injective (lossy).
+- **Drift gamma**: The average multiplicative growth factor per iteration in your domain.
+
+### Adding a RigorousTheoreticalCheck Subclass
+
+Extend the physics validation to include contraction geometry bounds:
+
+```python
+from sigma_c_framework.sigma_c.physics.rigorous import RigorousTheoreticalCheck
+from sigma_c_framework.sigma_c.physics.contraction import ContractionGeometryMixin
+import numpy as np
+
+class RigorousYourDomainV3(RigorousTheoreticalCheck, ContractionGeometryMixin):
+    """Physics validation with contraction geometry for your domain."""
+
+    def compute_contraction_defect(self, data):
+        input_size = len(data['input_states'])
+        output_size = len(set(data['output_states']))
+        return input_size / output_size  # D >= 1
+
+    def compute_drift(self, data):
+        ratios = np.array(data['output_values']) / np.array(data['input_values'])
+        return np.exp(np.mean(np.log(ratios)))  # geometric mean growth
+
+    def check_convergence(self, data):
+        D = self.compute_contraction_defect(data)
+        gamma = self.compute_drift(data)
+        sigma = D * gamma
+        return {'D': D, 'gamma': gamma, 'sigma': sigma, 'convergent': sigma < 1}
+```
+
+The `sigma < 1` criterion is universal across all domains. If your domain's map has $\sigma \geq 1$, the system is at or beyond the critical threshold and will not converge.
+
 ## Support
 
 For questions or assistance extending the framework:

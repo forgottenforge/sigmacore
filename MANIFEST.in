@@ -6,3 +6,4 @@ include HARDWARE_COMPATIBILITY.md
 include EXTENDING_DOMAINS.md
 recursive-include sigma_c_core/include *
 recursive-include sigma_c_core/src *
+prune new

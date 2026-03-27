@@ -5,6 +5,29 @@ All notable changes to the Sigma-C Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-26
+
+### Added
+- Contraction geometry (`core/contraction.py`)
+- Four-type classification (`core/classification.py`)
+- Extended derivative estimation (`core/derivatives.py`)
+- Formal validation (`core/validation.py`)
+- Information theory (`beyond/information.py`)
+- `NumberTheoryAdapter` with 12-map verification
+- `ProteinAdapter` with TTR/LYZ/GSN/SOD1/PRNP datasets
+- `LinguisticsAdapter` with English/German analysis
+- `RigorousNumberTheorySigmaC`, `RigorousProteinSigmaC`
+- `ProteinInterventionOptimizer`
+- 7 new demos, 9 new test modules (85+ tests)
+- 7 new documentation files
+
+### Changed
+- Engine supports `derivative_method` parameter
+- `Universe` has 3 new factory methods (`number_theory()`, `protein()`, `linguistics()`)
+
+### Fixed
+- (Fully backward compatible, no breaking changes)
+
 ## [1.1.0] - 2025-11-21
 
 ### Added
