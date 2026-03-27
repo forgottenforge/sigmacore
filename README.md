@@ -1,10 +1,22 @@
-# Sigma-C Framework v2.1.0
+# Sigma-C Framework v3.0.0
 
 **Universal Criticality Analysis & Active Control System**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-3.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
+
+## What's New in v3.0
+
+- **Contraction Geometry**: D (contraction diameter) and gamma (contraction ratio) as first-class metrics
+- **Four-Type Classification**: Systems classified as D (Divergent), O (Oscillatory), S (Stable), or R (Resonant)
+- **3 New Domains**: Number Theory, Protein Stability, and Linguistics adapters
+- **Extended Derivative Estimation**: Configurable derivative methods for susceptibility computation
+- **Formal Validation**: Rigorous mathematical validation of criticality claims
+- **Information Theory**: Shannon entropy and mutual information analysis in `beyond/information.py`
+- **12 Domain Adapters** (was 9) with full backward compatibility
+- **85+ New Tests** across 9 new test modules
+- **7 New Demos** showcasing all v3.0 features
 
 ## Overview
 
@@ -45,6 +57,9 @@ This paper demonstrates the framework's application to **quantum computing on re
 | ML | `MLAdapter` | Training robustness, learning rate sensitivity |
 | Edge/IoT | `EdgeAdapter` | Power efficiency phase transitions |
 | LLM Cost | `LLMCostAdapter` | Cost-quality Pareto frontier analysis |
+| Number Theory | `NumberTheoryAdapter` | 12-map verification, prime distribution analysis |
+| Protein | `ProteinAdapter` | TTR/LYZ/GSN/SOD1/PRNP mutation stability |
+| Linguistics | `LinguisticsAdapter` | Cross-language correlation analysis |
 
 ## Integrations
 
@@ -168,7 +183,7 @@ All demos run locally without external services or optional dependencies.
 
 ## Documentation
 
-- [API Reference](docs/API_REFERENCE_v2.0.md)
+- [API Reference](docs/API_REFERENCE_v3.0.md)
 - [Release Notes](docs/releases/)
 - [Examples](examples/v4/)
 

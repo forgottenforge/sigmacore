@@ -28,7 +28,7 @@ class SigmaCAdapter(ABC):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.engine = Engine()
-        self._version = "2.1.0"
+        self._version = "3.0.0"
     
     @abstractmethod
     def get_observable(self, data: Any, **kwargs) -> float:

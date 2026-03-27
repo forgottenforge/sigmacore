@@ -56,6 +56,9 @@ coverage.xml
 *.log
 tmp/
 
+# Paper sources (NEVER commit to repo or include in package)
+new/
+
 # Cache directories
 cache/
 cache_seis/

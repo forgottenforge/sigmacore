@@ -1,6 +1,6 @@
 # Sigma-C Framework - Quick Start Guide
 
-**Version 1.2.0** | **Copyright (c) 2025 ForgottenForge.xyz**
+**Version 3.0.0** | **Copyright (c) 2025-2026 ForgottenForge.xyz**
 
 ## For Developers: Getting Started in 5 Minutes
 
@@ -36,6 +36,27 @@ print(f"Stability score: {result['statistics']['kappa']:.2f}")
 | **Climate** | Spatial scaling in weather data | `Universe.climate()` |
 | **Seismic** | Earthquake criticality analysis | `Universe.seismic()` |
 | **Magnetic** | Phase transitions (Ising model) | `Universe.magnetic()` |
+| **Number Theory** | Prime distribution, 12-map verification | `Universe.number_theory()` |
+| **Protein** | Mutation stability (TTR, LYZ, GSN, SOD1, PRNP) | `Universe.protein()` |
+| **Linguistics** | Cross-language correlation analysis | `Universe.linguistics()` |
+
+### v3.0 Quick Examples
+
+```python
+from sigma_c import Universe
+
+# Number Theory
+nt = Universe.number_theory()
+pred = nt.predict_behavior()
+
+# Protein
+pa = Universe.protein(protein_name='TTR')
+result = pa.analyze_protein(pa.TTR_MUTATIONS)
+
+# Linguistics
+la = Universe.linguistics()
+corr = la.correlation_analysis()
+```
 
 ### 4. Run the Examples
 
