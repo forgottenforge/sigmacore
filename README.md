@@ -1,9 +1,9 @@
-# Sigma-C Framework v3.1.0
+# Sigma-C Framework v3.1.1
 
 **Universal Criticality Analysis & Active Control System**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-3.1.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-3.1.1-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
 ## What's New in v3.1

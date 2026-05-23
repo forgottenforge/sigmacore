@@ -24,7 +24,7 @@ def __getattr__(name):
         return getattr(module, attr)
     raise AttributeError(f"module 'sigma_c' has no attribute {name!r}")
 
-__version__ = "3.1.0"
+__version__ = "3.1.1"
 __all__ = [
     "Universe", "SigmaCAdapter",
     "QuantumAdapter", "GPUAdapter", "FinancialAdapter", "MLAdapter",

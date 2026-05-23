@@ -20,7 +20,7 @@ from sigma_c.core.classification import MapType
 
 class TestVersion:
     def test_version_string(self):
-        assert __version__ == "3.1.0"
+        assert __version__ == "3.1.1"
 
 
 # ------------------------------------------------------------------
