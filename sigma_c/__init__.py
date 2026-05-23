@@ -15,7 +15,6 @@ def __getattr__(name):
         'LLMCostAdapter': ('.adapters.llm_cost', 'LLMCostAdapter'),
         'NumberTheoryAdapter': ('.adapters.number_theory', 'NumberTheoryAdapter'),
         'ProteinAdapter': ('.adapters.protein', 'ProteinAdapter'),
-        'LinguisticsAdapter': ('.adapters.linguistics', 'LinguisticsAdapter'),
         'MapType': ('.core.classification', 'MapType'),
     }
     if name in _adapter_map:
@@ -25,12 +24,12 @@ def __getattr__(name):
         return getattr(module, attr)
     raise AttributeError(f"module 'sigma_c' has no attribute {name!r}")
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __all__ = [
     "Universe", "SigmaCAdapter",
     "QuantumAdapter", "GPUAdapter", "FinancialAdapter", "MLAdapter",
     "ClimateAdapter", "SeismicAdapter", "MagneticAdapter",
     "EdgeAdapter", "LLMCostAdapter",
-    "NumberTheoryAdapter", "ProteinAdapter", "LinguisticsAdapter",
+    "NumberTheoryAdapter", "ProteinAdapter",
     "MapType",
 ]

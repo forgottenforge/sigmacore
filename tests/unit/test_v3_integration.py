@@ -20,7 +20,7 @@ from sigma_c.core.classification import MapType
 
 class TestVersion:
     def test_version_string(self):
-        assert __version__ == "3.0.0"
+        assert __version__ == "3.1.0"
 
 
 # ------------------------------------------------------------------
@@ -44,7 +44,6 @@ class TestImports:
             LLMCostAdapter,
             NumberTheoryAdapter,
             ProteinAdapter,
-            LinguisticsAdapter,
             MapType,
         )
         # Verify they are actual classes / enums
@@ -75,7 +74,6 @@ class TestAllAdapters:
             adapters.append(('magnetic', Universe.magnetic()))
             adapters.append(('number_theory', Universe.number_theory()))
             adapters.append(('protein', Universe.protein(protein_name='TTR')))
-            adapters.append(('linguistics', Universe.linguistics(language='english')))
 
             # Quantum needs a Circuit for diagnose
             from sigma_c.adapters.quantum import Circuit
@@ -99,7 +97,6 @@ class TestAllAdapters:
             adapters_to_test.append(('magnetic', Universe.magnetic()))
             adapters_to_test.append(('number_theory', Universe.number_theory()))
             adapters_to_test.append(('protein', Universe.protein(protein_name='TTR')))
-            adapters_to_test.append(('linguistics', Universe.linguistics(language='english')))
 
             # Adapters that need data for diagnose()
             from sigma_c.adapters.quantum import Circuit

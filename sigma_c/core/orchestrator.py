@@ -62,11 +62,6 @@ class Universe:
         return ProteinAdapter(protein_name=protein_name, **kwargs)
 
     @staticmethod
-    def linguistics(language='english', **kwargs):
-        from ..adapters.linguistics import LinguisticsAdapter
-        return LinguisticsAdapter(language=language, **kwargs)
-
-    @staticmethod
     def classify(D, gamma=None, **kwargs):
         from .classification import classify_operation
         return classify_operation(D, gamma, **kwargs)
@@ -118,6 +113,5 @@ class Universe:
         if isinstance(data, str):
             if data.strip().isupper() and all(c.isalpha() or c.isspace() for c in data.strip()):
                 return 'protein'
-            return 'linguistics'
 
         return 'gpu'

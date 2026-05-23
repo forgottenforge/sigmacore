@@ -1,22 +1,31 @@
-# Sigma-C Framework v3.0.0
+# Sigma-C Framework v3.1.0
 
 **Universal Criticality Analysis & Active Control System**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-3.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-3.1.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![Status](https://img.shields.io/badge/status-production-success.svg)]()
 
-## What's New in v3.0
+## What's New in v3.1
+
+- **Linguistics adapter removed**: rigorous reanalysis showed the
+  "peak at ED 3, kappa ~ 3.1" claim does not replicate at scale
+  (hand-coded ED list contained ~6% circular coding; auto-coded
+  Wiktionary samples give kappa ~ 1.6 with unstable peak location).
+  The application is now classified as a tested-and-failed boundary
+  case of the framework. The remaining 11 domain adapters are
+  unaffected.
+
+## What was in v3.0
 
 - **Contraction Geometry**: D (contraction diameter) and gamma (contraction ratio) as first-class metrics
 - **Four-Type Classification**: Systems classified as D (Divergent), O (Oscillatory), S (Stable), or R (Resonant)
-- **3 New Domains**: Number Theory, Protein Stability, and Linguistics adapters
+- **2 New Domains**: Number Theory and Protein Stability adapters
 - **Extended Derivative Estimation**: Configurable derivative methods for susceptibility computation
 - **Formal Validation**: Rigorous mathematical validation of criticality claims
 - **Information Theory**: Shannon entropy and mutual information analysis in `beyond/information.py`
-- **12 Domain Adapters** (was 9) with full backward compatibility
-- **85+ New Tests** across 9 new test modules
-- **7 New Demos** showcasing all v3.0 features
+- **11 Domain Adapters** with full backward compatibility
+- **80+ Tests** across the framework
 
 ## Overview
 
@@ -59,7 +68,6 @@ This paper demonstrates the framework's application to **quantum computing on re
 | LLM Cost | `LLMCostAdapter` | Cost-quality Pareto frontier analysis |
 | Number Theory | `NumberTheoryAdapter` | 12-map verification, prime distribution analysis |
 | Protein | `ProteinAdapter` | TTR/LYZ/GSN/SOD1/PRNP mutation stability |
-| Linguistics | `LinguisticsAdapter` | Cross-language correlation analysis |
 
 ## Integrations
 
