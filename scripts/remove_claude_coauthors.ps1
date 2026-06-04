@@ -73,10 +73,13 @@ try {
     # not always installed on Windows).
     $env:FILTER_BRANCH_SQUELCH_WARNING = "1"
 
-    # The msg-filter shell command. Git invokes it through sh.exe on Windows.
-    # We use python with the temp script as a single quoted argument.
+    # The msg-filter shell command. Git invokes it through sh.exe on Windows,
+    # which strips backslashes from quoted strings. Use forward slashes for
+    # BOTH the python executable and the script path -- Git Bash on Windows
+    # accepts forward-slash paths and passes them to Win32 APIs correctly.
     $tempFilterFwd = $tempFilter -replace '\\', '/'
-    $filterCmd = "`"$pythonExe`" `"$tempFilterFwd`""
+    $pythonExeFwd = $pythonExe -replace '\\', '/'
+    $filterCmd = "`"$pythonExeFwd`" `"$tempFilterFwd`""
 
     git filter-branch --force --msg-filter $filterCmd --tag-name-filter cat -- --all
 
@@ -101,14 +104,15 @@ try {
 
     Write-Host ""
     Write-Host ">> Cleaning up filter-branch backup refs..."
-    $backupRefs = git for-each-ref --format='%(refname)' refs/original/
-    if ($backupRefs) {
-        $backupRefs -split "`n" | ForEach-Object {
-            if ($_) { git update-ref -d $_.Trim() }
+    $backupRefs = @(git for-each-ref --format='%(refname)' refs/original/) | Where-Object { $_ }
+    foreach ($ref in $backupRefs) {
+        $ref = $ref.Trim()
+        if ($ref) {
+            git update-ref -d $ref 2>$null
         }
     }
-    git reflog expire --expire=now --all | Out-Null
-    git gc --prune=now --aggressive | Out-Null
+    git reflog expire --expire=now --all 2>$null | Out-Null
+    git gc --prune=now --aggressive 2>$null | Out-Null
 
     Write-Host ""
     Write-Host ">> Done. Next steps (run manually when ready):"
