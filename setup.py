@@ -31,29 +31,12 @@ ext_modules = [
 ]
 
 setup(
-
-    name="sigma_c_framework",
-    version="3.0.0",
-    packages=find_packages(),
+    # Note: package metadata (name, version, deps, etc.) is canonically
+    # defined in pyproject.toml. This setup.py exists only for the
+    # optional pybind11 C++ extension build. Do not duplicate metadata
+    # here -- keep pyproject.toml as the single source of truth.
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
-    install_requires=[
-        "numpy",
-        "scipy",
-        "pandas",
-        "tqdm",
-        "matplotlib",
-        "seaborn",
-        "requests",
-        "yfinance",
-        "pynvml",
-        "scikit-learn",
-        "pyyaml",
-    ],
-    entry_points={
-        "console_scripts": [
-            "sigma-c=sigma_c.cli:main",
-        ],
-    },
+    packages=find_packages(),
     zip_safe=False,
 )

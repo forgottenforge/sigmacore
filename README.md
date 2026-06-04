@@ -1,203 +1,209 @@
-# Sigma-C Framework v3.1.1
+# Sigma-C Framework v4.0.0
 
-**Universal Criticality Analysis & Active Control System**
+**Susceptibility-based scale selection across physical, computational, and
+data-driven systems.**
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/version-3.1.1-green.svg)](https://pypi.org/project/sigma-c-framework/)
-[![Status](https://img.shields.io/badge/status-production-success.svg)]()
+[![License: AGPL-3.0-or-later OR Commercial](https://img.shields.io/badge/License-AGPL_v3_%7C_Commercial-blue.svg)](#license)
+[![Version](https://img.shields.io/badge/version-4.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.20548818-blue.svg)](https://doi.org/10.5281/zenodo.20548818)
+[![Status](https://img.shields.io/badge/status-stable-success.svg)]()
 
-## What's New in v3.1
+Sigma-C Framework now ships in **two interoperable layers**:
 
-- **Linguistics adapter removed**: rigorous reanalysis showed the
-  "peak at ED 3, kappa ~ 3.1" claim does not replicate at scale
-  (hand-coded ED list contained ~6% circular coding; auto-coded
-  Wiktionary samples give kappa ~ 1.6 with unstable peak location).
-  The application is now classified as a tested-and-failed boundary
-  case of the framework. The remaining 11 domain adapters are
-  unaffected.
+- **v4 disciplined-reader kernel** (`sigma_c_v4/`): the implementation of
+  the foundation paper *Operational scale selection: axioms, spectral
+  concentration, and a regime trichotomy* (Zenodo DOI
+  [10.5281/zenodo.20548818](https://doi.org/10.5281/zenodo.20548818),
+  JSP submission JOSS-S-26-00346, under review). Every output either
+  cites a theorem from the paper or admits it cannot.
+- **v1–v3 multi-adapter applications stack** (`sigma_c/`): the existing
+  domain adapters (Quantum, Finance, Climate, Seismic, Magnetic, GPU,
+  ML, Number Theory, Protein, Edge, LLM cost), public API since v1.0,
+  unchanged in v4 except for additive integration with the v4 kernel.
 
-## What was in v3.0
+The two layers consume the same susceptibility-peak idea. The kernel is
+strict and paper-anchored; the adapters are domain-specific and
+operationally framed. Choose whichever fits the question.
 
-- **Contraction Geometry**: D (contraction diameter) and gamma (contraction ratio) as first-class metrics
-- **Four-Type Classification**: Systems classified as D (Divergent), O (Oscillatory), S (Stable), or R (Resonant)
-- **2 New Domains**: Number Theory and Protein Stability adapters
-- **Extended Derivative Estimation**: Configurable derivative methods for susceptibility computation
-- **Formal Validation**: Rigorous mathematical validation of criticality claims
-- **Information Theory**: Shannon entropy and mutual information analysis in `beyond/information.py`
-- **11 Domain Adapters** with full backward compatibility
-- **80+ Tests** across the framework
+## What is sigma_c?
 
-## Overview
+For any system observed at variable resolution `sigma`, the
+**susceptibility-peak scale-selection functional** is
 
-Sigma-C is a framework for detecting and analyzing **critical phase transitions** across physical, computational, and data-driven systems. It provides a unified susceptibility-based approach: sweep a control parameter, compute the response function (susceptibility), and locate the critical point where the system transitions between qualitatively different regimes.
+```
+sigma_c[O] := argmax_sigma |dO / d log sigma|
+```
 
-The core idea is simple: for any system with a tunable parameter and a measurable observable, the susceptibility `chi = dO/d(epsilon)` peaks at the critical point `sigma_c`. The sharpness of that peak (`kappa`) quantifies how pronounced the transition is.
+In words: where does the observable `O` respond most sharply to a
+multiplicative change of resolution? The location of the peak,
+`sigma_c`, is the characteristic scale; the sharpness of the peak,
+`kappa`, quantifies how pronounced the transition is.
 
-### Peer-Reviewed Application
+Under explicit named hypotheses (positive-noise transfer operator with
+discrete spectral gap, single-mode faithful observable), `sigma_c`
+factors as `sigma_c = rho_star * tau` with `tau = -T_* / log
+|lambda_2 / lambda_1|` the system-intrinsic relaxation scale and
+`rho_star` a probe-shape constant. The foundation paper formalises
+this and proves three load-bearing results: a compatibility theorem,
+a cross-observable concentration theorem, and a regime trichotomy
+(single-mode / multi-mode / spectrally-flat).
 
-The methodology behind Sigma-C has been validated in a peer-reviewed publication:
-
-> **"Operational scale detection in quantum magnetism"**
-> AVS Quantum Science, Volume 8, Issue 1, Article 013804 (2026)
-> [https://doi.org/10.1116/5.0254846](https://doi.org/10.1116/5.0254846)
-
-This paper demonstrates the framework's application to **quantum computing on real hardware** (Rigetti Ankaa-3), where Sigma-C successfully identifies the critical noise threshold at which quantum algorithms lose their advantage over classical computation. The detected critical point (`sigma_c = 0.070 +/- 0.009`) and correlation length (`xi_c = 8.00 +/- 0.50 qubits`) are consistent with theoretical predictions from quantum error correction theory.
-
-## Core Capabilities
-
-- **Susceptibility Analysis**: Detect critical points via `chi = dO/d(epsilon)` with Gaussian kernel smoothing
-- **Active Control**: PID controller to maintain systems at or near critical points
-- **Streaming Computation**: O(1) real-time susceptibility updates using Welford's algorithm
-- **Observable Discovery**: Automatic identification of optimal order parameters
-- **Multi-Scale Analysis**: Wavelet-based criticality detection across scales
-- **Statistical Rigor**: Jonckheere-Terpstra trend tests, isotonic regression with bootstrap CI
-- **High-Performance Core**: Optional C++ backend via pybind11, CUDA acceleration via CuPy
-
-## Domain Adapters
-
-| Domain | Adapter | Key Methods |
-|--------|---------|-------------|
-| Quantum | `QuantumAdapter` | Noise sweep, depth scaling, idle sensitivity, Fisher information |
-| GPU/HPC | `GPUAdapter` | Cache transition detection, roofline analysis, thermal throttling |
-| Finance | `FinancialAdapter` | Hurst exponent, GARCH(1,1) volatility, order flow imbalance |
-| Climate | `ClimateAdapter` | Mesoscale boundary detection, vertical stability analysis |
-| Seismic | `SeismicAdapter` | Gutenberg-Richter b-value, Omori aftershock scaling |
-| Magnetic | `MagneticAdapter` | Critical exponents (beta, gamma, alpha), finite size scaling |
-| ML | `MLAdapter` | Training robustness, learning rate sensitivity |
-| Edge/IoT | `EdgeAdapter` | Power efficiency phase transitions |
-| LLM Cost | `LLMCostAdapter` | Cost-quality Pareto frontier analysis |
-| Number Theory | `NumberTheoryAdapter` | 12-map verification, prime distribution analysis |
-| Protein | `ProteinAdapter` | TTR/LYZ/GSN/SOD1/PRNP mutation stability |
-
-## Integrations
-
-| Category | Integration | Description |
-|----------|------------|-------------|
-| **Quantum** | Qiskit | Circuit noise sensitivity analysis |
-| | PennyLane | VQA criticality tracking device |
-| | Cirq | Circuit optimization for stability |
-| | AWS Braket | Native quantum hardware adapter |
-| **ML Frameworks** | PyTorch | `CriticalModule` with activation tracking |
-| | TensorFlow | `SigmaCCallback` for Keras training |
-| | JAX | `critical_jit` decorator, `CriticalOptimizer` |
-| | CUDA/CuPy | GPU-accelerated susceptibility computation |
-| **APIs** | REST | FastAPI endpoint (`SigmaCAPI`) |
-| | GraphQL | Strawberry + built-in zero-dep resolver |
-| | WASM | Browser-native JS module generator |
-| **Monitoring** | Grafana | Prometheus metrics export (push + pull) |
-| | Kubernetes | Pod criticality monitoring + autoscaling |
-| | GitHub Actions | AST-based code complexity CI gate |
-| **Finance** | QuantLib | Black-Scholes with criticality adjustment |
-| | Zipline | Crash avoidance trading strategy |
-| **Platforms** | Home Assistant | Smart home criticality sensor |
-| | VSCode | Real-time code complexity status bar |
-| **Reporting** | LaTeX | Publication-ready tables, figures, reports |
-| **Bindings** | Julia | `SigmaC.jl` native binding |
-| | Mathematica | `SigmaC.m` Wolfram Language binding |
-| | Lean 4 | `SigmaC.lean` theorem prover binding |
-
-## Installation
+## Install
 
 ```bash
-# Core framework
 pip install sigma-c-framework
-
-# With quantum integrations
-pip install sigma-c-framework[quantum]
-
-# With GPU acceleration
-pip install sigma-c-framework[gpu]
 ```
 
-## Quick Start
+Optional extras for domain integrations:
 
-### Detecting a Phase Transition (Ising Model)
+```bash
+pip install sigma-c-framework[quantum]   # Qiskit, Cirq, PennyLane
+pip install sigma-c-framework[gpu]       # CuPy
+pip install sigma-c-framework[finance]   # QuantLib
+pip install sigma-c-framework[all]       # everything
+```
+
+## Quick start
+
+### v4 disciplined kernel
+
+```python
+import numpy as np
+from sigma_c_v4 import analyze, gamma_k, Framework
+
+# Bare exponential decay -> regime I, sigma_c = relaxation time
+sigma = np.geomspace(0.1, 100, 400)
+O = np.exp(-sigma / 5.0)
+result = analyze(sigma, O, window="bare")
+
+print(result.summary())
+# sigma_c       : 5.003
+# tau           : 5.003
+# rho_star      : 1   [analytic:bare, analytic]
+# regime        : geom=I_geom
+# Theorem backing:
+#   * paper Def 2.2 (def:sigmac)
+#   * paper Prop 4.1 (prop:structural-reduction)
+#   * paper Thm 8.3 (thm:trichotomy-geometric)
+#   * paper Thm 6.1 (thm:cross-obs-concentration)
+
+result.card("out.png")  # FUSE-style light-theme card
+```
+
+Power-law data (no characteristic scale) returns `sigma_c = None`
+honestly, not NaN:
+
+```python
+result = analyze(sigma, sigma**0.6, window="bare")
+assert result.sigma_c is None        # regime III, bottom value
+assert result.regime.geometric == "III_geom"
+```
+
+### v3 multi-adapter applications
 
 ```python
 import numpy as np
 from sigma_c import Universe
 
-# Generate synthetic magnetization data across temperatures
 temperatures = np.linspace(1.5, 3.5, 50)
-Tc = 2.269  # Exact 2D Ising critical temperature
 magnetization = np.where(
-    temperatures < Tc,
-    np.abs(Tc - temperatures)**0.125,
-    0.01 * np.random.randn(np.sum(temperatures >= Tc))
+    temperatures < 2.269,
+    np.abs(2.269 - temperatures)**0.125,
+    0.01 * np.random.randn(50),
 )
-
-# Find the critical point using susceptibility analysis
 mag = Universe.magnetic()
 result = mag.compute_susceptibility(temperatures, magnetization)
-
-print(f"Detected Tc:    {result['sigma_c']:.3f}")
-print(f"Theoretical Tc: {Tc}")
-print(f"Peak sharpness: {result['kappa']:.1f}")
-```
-
-### Quantum Noise Threshold Detection
-
-```python
-import numpy as np
-from sigma_c import Universe
-
-qpu = Universe.quantum(device='simulator')
-result = qpu.run_optimization(
-    circuit_type='grover',
-    epsilon_values=np.linspace(0.0, 0.25, 20),
-    shots=1000
-)
-
-print(f"Critical noise level: {result['sigma_c']:.4f}")
-print(f"Peak clarity (kappa): {result['kappa']:.1f}")
-# Above sigma_c, Grover's algorithm loses quantum advantage
-```
-
-### Financial Volatility Regime Detection
-
-```python
-import numpy as np
-from sigma_c import Universe
-
-fin = Universe.finance()
-returns = np.random.randn(1000) * 0.02  # Simulated daily returns
-
-# GARCH(1,1) volatility clustering analysis
-garch = fin.analyze_volatility_clustering(returns)
-print(f"Persistence: {garch['persistence']:.3f}")
-print(f"Regime:      {'Critical' if garch['persistence'] > 0.95 else 'Stable'}")
+print(f"Detected Tc: {result['sigma_c']:.3f}, kappa = {result['kappa']:.1f}")
 ```
 
 ## Examples
 
-The `examples/v4/` directory contains 12 demo files covering every module:
-
-| Demo | Covers |
-|------|--------|
-| `demo_quantum.py` | Quantum noise threshold detection |
-| `demo_finance.py` | GARCH volatility, Hurst exponent |
-| `demo_climate.py` | Atmospheric mesoscale boundary |
-| `demo_magnetic.py` | 2D Ising Curie temperature |
-| `demo_seismic.py` | Gutenberg-Richter b-value |
-| `demo_gpu.py` | GPU cache transition, roofline |
-| `demo_diagnostics.py` | Universal diagnostics system |
-| `demo_integrations.py` | GraphQL, CI, REST, WASM, HA, TF, LaTeX, Bridge |
-| `demo_ml_frameworks.py` | PyTorch, JAX, CUDA, TensorFlow |
-| `demo_quantum_connectors.py` | Qiskit, PennyLane, Cirq |
-| `demo_edge_llm.py` | Edge IoT, ML hyperparameters, LLM cost |
-| `demo_optimization.py` | ML optimizer, brute force, QuantLib, Zipline, Grafana/K8s |
-
-All demos run locally without external services or optional dependencies.
+| Path | What it covers |
+|------|----------------|
+| [`sigma_c_v4/examples/01_coffee_cooling.py`](sigma_c_v4/examples/01_coffee_cooling.py) | Regime I single-mode, sigma_c = relaxation time |
+| [`sigma_c_v4/examples/02_zipf_wealth.py`](sigma_c_v4/examples/02_zipf_wealth.py) | Regime III, `sigma_c = bottom` as positive output |
+| [`sigma_c_v4/examples/03_two_windows.py`](sigma_c_v4/examples/03_two_windows.py) | rho_star separation principle, two windows on one system |
+| [`sigma_c_v4/examples/04_bimodal_relaxation.py`](sigma_c_v4/examples/04_bimodal_relaxation.py) | Regime II multi-mode, vector-valued sigma_c |
+| [`sigma_c_v4/examples/05_ising_chain.py`](sigma_c_v4/examples/05_ising_chain.py) | 1D Ising chain anchor, textbook correlation length |
+| [`sigma_c_v4/adapters/gallery_qmag_audit.png`](sigma_c_v4/adapters/gallery_qmag_audit.png) | 7-panel audit gallery of the NISQ quantum-magnetism dataset |
+| [`examples/v4/demo_quantum.py`](examples/v4/demo_quantum.py) | Quantum noise threshold (v3 stack) |
+| [`examples/v4/demo_finance.py`](examples/v4/demo_finance.py) | GARCH volatility (v3 stack) |
+| [`examples/v4/demo_climate.py`](examples/v4/demo_climate.py) | Atmospheric mesoscale boundary (v3 stack) |
 
 ## Documentation
 
-- [API Reference](docs/API_REFERENCE_v3.0.md)
-- [Release Notes](docs/releases/)
-- [Examples](examples/v4/)
+- [`sigma_c_v4/README.md`](sigma_c_v4/README.md) — v4 kernel scope, modules,
+  what is and is not in scope.
+- [`THEOREM_MAP.md`](THEOREM_MAP.md) — label → paper-number binding,
+  camera-ready safe; v4 docstrings cite labels and resolve numbers here.
+- [`docs/01_getting_started.md`](docs/01_getting_started.md) — quick-start
+  for the v3 adapters.
+- [`docs/02_core_concepts.md`](docs/02_core_concepts.md) — chi, sigma_c,
+  kappa, observable discovery.
+- [`docs/04_contraction_geometry.md`](docs/04_contraction_geometry.md) —
+  v3 contraction geometry (D, gamma).
+- [`docs/05_type_classification.md`](docs/05_type_classification.md) — v3
+  four-type classification (D / O / S / R), separate from the v4 trichotomy.
+- [`docs/06_api_reference.md`](docs/06_api_reference.md) — v3 API.
+- [`docs/EXTENDING_DOMAINS.md`](docs/EXTENDING_DOMAINS.md) — write your
+  own domain adapter.
+
+## Version history
+
+| Version | What changed |
+|---------|--------------|
+| **4.0.0** | v4 disciplined-reader kernel (`sigma_c_v4/`): foundation paper implementation, three-layer regime trichotomy (geometric / spectral / operational), F1/F2/F3 faithfulness checkers with explicit C_R constants, non-circular two-probe test, paper-theorem-backed Result type, THEOREM_MAP.md, Wurm 2026 NISQ-anchor adapter with paper-convention overlay, 7-panel audit gallery. v1–v3 API preserved. |
+| 3.1.1   | README header bump. |
+| 3.1.0   | Linguistics adapter removed (tested and failed; documented). |
+| 3.0.0   | Contraction Geometry: D and gamma as first-class metrics; four-type classification (D / O / S / R); Number Theory and Protein Stability adapters. |
+| 2.1.0   | Full feature implementation across all adapters. |
+| 2.0.3   | Production hardening and the AVS Quantum Science 8, 013804 (2026) reference. |
+| 2.0.x   | Rigor refinement, repository reorganisation, bugfix releases. |
+| 2.0.0   | 22 integrations, IonQ support, complete documentation. |
+| 1.2.3   | Universal optimisation. |
+| 1.2.1   | Release notes added. |
+| 1.1.0   | Multi-domain extensions. |
+| 1.0.0   | Initial release: sigma_c, kappa, eight domain adapters. |
+
+## Foundation paper
+
+> Wurm, M. C. (2026). *Operational scale selection: axioms, spectral
+> concentration, and a regime trichotomy.* Zenodo.
+> doi:[10.5281/zenodo.20548818](https://doi.org/10.5281/zenodo.20548818)
+> Manuscript JOSS-S-26-00346 under review at Journal of Statistical
+> Physics (Springer).
+
+For the applied validation on real quantum hardware:
+
+> Wurm, M. C. (2026). *Operational scale detection in quantum magnetism.*
+> AVS Quantum Science **8** (1), 013804.
+> doi:[10.1116/5.0312410](https://doi.org/10.1116/5.0312410)
 
 ## License
 
-**Open Source**: AGPL-3.0-or-later
-**Commercial**: Contact [nfo@forgottenforge.xyz](mailto:nfo@forgottenforge.xyz)
+Sigma-C Framework is offered under a **dual license**:
 
-Copyright (c) 2025 ForgottenForge.xyz
+1. **Open Source / Non-Commercial:** [GNU Affero General Public
+   License v3.0 or later](license_AGPL.txt). Derivative works must
+   also be licensed under AGPL-3.0-or-later.
+2. **Commercial:** for proprietary use without AGPL obligations, see
+   [`license_COMMERCIAL.txt`](license_COMMERCIAL.txt) or contact
+   [nfo@forgottenforge.xyz](mailto:nfo@forgottenforge.xyz).
+
+See [`LICENSE.txt`](LICENSE.txt) for the dual-license notice.
+
+## Contributing
+
+Issue reports and pull requests are welcome. Before opening a PR
+please read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security disclosures go
+through [`SECURITY.md`](SECURITY.md).
+
+## Acknowledgements
+
+Sigma-C Framework is developed at **ForgottenForge** by M. C. Wurm.
+AI assistance (Arti Cyan — primarily Anthropic Claude) is used as a
+writing, refactoring, and proof-reading partner; every theorem, proof,
+numerical value, figure, and load-bearing code change is reviewed by
+the human author against primary sources. AI assistance is declared
+explicitly in the foundation paper.

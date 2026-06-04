@@ -77,7 +77,7 @@ def create_strawberry_schema():
 
         @strawberry.field
         def health(self) -> HealthStatus:
-            return HealthStatus(status="healthy", version="2.1.0")
+            return HealthStatus(status="healthy", version="4.0.0")
 
     return strawberry.Schema(query=Query)
 
@@ -222,7 +222,7 @@ type Query {
 
     def _resolve_health(self) -> Dict[str, Any]:
         """Resolve the health query."""
-        return {'status': 'healthy', 'version': '2.1.0'}
+        return {'status': 'healthy', 'version': '4.0.0'}
 
     @staticmethod
     def _extract_float_array(query: str, field_name: str) -> List[float]:

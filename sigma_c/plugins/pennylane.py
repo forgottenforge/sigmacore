@@ -64,7 +64,7 @@ class SigmaCDevice:
 
     name = "Sigma-C Simulator"
     short_name = "sigma_c.simulator"
-    version = "2.1.0"
+    version = "4.0.0"
 
     def __init__(self, wires: int = 2, shots: int = None, **kwargs):
         self.wires = wires

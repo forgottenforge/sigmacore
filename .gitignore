@@ -72,3 +72,38 @@ tests/validation/outputs/*.txt
 *.so
 *.dylib
 sigma_c_core.*.pyd
+
+# Virtual environments (NEVER commit)
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files (may contain secrets)
+.env
+.env.*
+.envrc
+*.env
+
+# AI assistant artifacts
+.claude/
+.cursor/
+.aider*
+.codeium/
+
+# IDE configs
+.idea/
+.vscode/
+*.swp
+
+# Wheels and build artifacts (rebuilt fresh on release)
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Stale top-level demo PNGs (canonical copies live in docs/results/)
+/magnetic_results.png
+/quantum_results.png
+/nul
+
