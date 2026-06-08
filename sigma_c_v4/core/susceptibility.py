@@ -126,3 +126,62 @@ def has_strictly_monotone_chi(chi: np.ndarray) -> bool:
         return False
     diffs = np.diff(chi)
     return bool(np.all(diffs >= 0) or np.all(diffs <= 0))
+
+
+def quadratic_peak_in_log_sigma(
+    sigma_grid: np.ndarray,
+    chi: np.ndarray,
+    peak_idx: Optional[int] = None,
+) -> Tuple[float, bool]:
+    """
+    Sub-grid refinement of a chi peak via quadratic interpolation in
+    log(sigma). Returns (sigma_c_sub, at_grid_boundary).
+
+    Without sub-grid refinement, two analyses on the same grid agree to
+    within one grid cell trivially -- a cross-detector or cross-window
+    `delta = 0.0` is then grid quantisation, not physics. This routine
+    promotes the reported sigma_c to a sub-grid value when the peak is
+    interior, and surfaces a boundary flag when it is at the grid edge
+    (where no quadratic interpolation is defined). Cite: paper Rem 4.12
+    (smoothing/numerical robustness).
+
+    Parameters
+    ----------
+    sigma_grid : (N,) array
+        Strictly positive, log-spaced grid.
+    chi : (N,) array
+        chi values on the grid.
+    peak_idx : int, optional
+        Index of the peak to refine. If None, taken to be argmax(chi).
+
+    Returns
+    -------
+    sigma_c_sub : float
+        The sub-grid peak location. Equals sigma_grid[peak_idx] when
+        refinement is not possible (boundary or degenerate parabola).
+    at_grid_boundary : bool
+        True iff peak_idx is at index 0 or len(chi)-1 (cannot refine).
+    """
+    sigma_grid = np.asarray(sigma_grid, dtype=float)
+    chi = np.asarray(chi, dtype=float)
+    if peak_idx is None:
+        peak_idx = int(np.argmax(chi))
+    n = len(chi)
+    if peak_idx <= 0 or peak_idx >= n - 1:
+        return float(sigma_grid[peak_idx]), True
+
+    log_sigma = np.log(sigma_grid)
+    h = log_sigma[peak_idx + 1] - log_sigma[peak_idx]
+    y0 = float(chi[peak_idx - 1])
+    y1 = float(chi[peak_idx])
+    y2 = float(chi[peak_idx + 1])
+    denom = y0 - 2.0 * y1 + y2
+    if abs(denom) < 1e-30:
+        # Degenerate parabola; report the grid sample and don't fail.
+        return float(sigma_grid[peak_idx]), False
+    offset = 0.5 * (y0 - y2) / denom
+    # Clamp to [-1, 1] -- a true peak should always have offset in (-1, 1)
+    # and runaway values indicate a non-peak (e.g. a noisy plateau).
+    offset = max(-1.0, min(1.0, offset))
+    sigma_c_sub = float(np.exp(log_sigma[peak_idx] + offset * h))
+    return sigma_c_sub, False

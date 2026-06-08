@@ -133,14 +133,46 @@ class Result:
     continuous-spectrum or unknown (then tau interpretation is
     dominant-scale-probe, not literal spectral gap; Principle 2)."""
 
+    # --- v4.1 field-found patches ---
+
+    sigma_c_at_grid_boundary: bool = False
+    """True iff the chi peak sits at the lowest or highest grid sample,
+    so sub-grid quadratic refinement was not possible. Downstream
+    cross-tests should treat boundary peaks as soft (the true peak may
+    lie outside the scan range entirely). v4.1: field-found in
+    a downstream-application Phase 1."""
+
+    preprocessing_scale_equivariant: Optional[bool] = None
+    """User declaration about the preprocessing operators applied to
+    the observable BEFORE analyze() was called.
+
+    - True  : every preprocessing step (filter, smoothing) is scale
+              equivariant; rho_star analytic is applicable, A1 holds.
+    - False : at least one preprocessing step carries an absolute
+              time-scale (e.g. fixed-bandwidth Butterworth bandpass);
+              the framework's analytic rho_star is NOT guaranteed valid
+              -- rho_star_source becomes "exploratory:..." and
+              .falsifiable returns False.
+    - None  : not declared (backward-compatible default). The result
+              is the same as v4.0.0, with a single note appended urging
+              the user to declare. v4.1: A1 guard introduced after the
+              a downstream-application Phase 1 finding."""
+
     # --- Falsifiability ---
     @property
     def falsifiable(self) -> bool:
         """
         True iff tau was obtained from an analytic rho_star (paper's
-        non-circular reading). A "fitted" rho_star is exploratory, not
-        falsifiable — Enforcement 2.
+        non-circular reading) AND the user has not declared the
+        preprocessing as carrying an absolute scale.
+
+        v4.1: a False preprocessing_scale_equivariant declaration
+        downgrades the result to exploratory regardless of rho_star
+        source -- the user has explicitly told the framework that A1
+        is not satisfied at the observable construction layer.
         """
+        if self.preprocessing_scale_equivariant is False:
+            return False
         return self.rho_star_source.startswith("analytic:")
 
     # --- Diagnostics ---
@@ -311,6 +343,13 @@ class TwoProbeResult:
     - "regime_ii"           : probes resolved different moduli, multi-mode system
     - "faithfulness_break"  : at least one probe is not single-mode faithful
     - "system_disagreement" : probes disagree on what counts as 'same system'
+    - "probes_not_distinct" : the two reported sigma_c values are closer than the
+                              coarser scan's grid spacing -- a PRECONDITION
+                              failure of the two-probe test, not a system
+                              property. v4.1 field-found in a downstream-application Phase 1:
+                              the user's observable construction collapsed two
+                              declared windows onto one probe. Fix the
+                              observable, not the system.
     - "indeterminate"       : test result inconclusive from data alone
     When passed=True, cause is None.
     """

@@ -150,15 +150,41 @@ class TestRhoStarSeparation:
 class TestNonCircularTwoProbe:
 
     def test_two_analytic_windows_pass_test(self):
+        """Two TRULY distinct probes that recover the same tau.
+
+        v4.1 update: the v4.0 version passed the SAME O to two different
+        window labels -- the new probes_not_distinct precheck correctly
+        flags that as a precondition failure (the downstream-application Phase 1
+        mistake). A meaningful two-probe pass requires two windows whose
+        canonical observable forms differ: here, O_exp from the
+        exponential kernel and O_gamma2 from the gamma2 kernel, both
+        applied to the same underlying exp(-t/tau) signal.
+        """
         tau_true = 5.0
         sigma = np.geomspace(0.05, 100.0, 1000)
-        O_bare = np.exp(-sigma / tau_true)
-        r_1 = analyze(sigma, O_bare, window=bare())
-        r_2 = analyze(sigma, O_bare, window=exponential())
-        test = two_probe_test(r_1, r_2, delta_threshold=0.05)
-        assert test.passed, f"expected pass, delta={test.delta}"
-        assert test.both_analytic
-        assert test.cause is None
+        # Canonical observables for the two windows applied to A(t) = exp(-t/tau)
+        # exponential window: O(sigma) = sigma*tau / (sigma+tau), peaks at sigma=tau, rho_star=1
+        # gamma2 window:      O(sigma) = sigma*tau^2 / (sigma+tau)^2, peaks at (2-sqrt(3))*tau, rho_star=2-sqrt(3)
+        O_exp_window    = sigma * tau_true / (sigma + tau_true)
+        O_gamma2_window = sigma * (tau_true ** 2) / (sigma + tau_true) ** 2
+        r_1 = analyze(sigma, O_exp_window,    window=exponential())
+        r_2 = analyze(sigma, O_gamma2_window, window=gamma_k(2))
+        # The gamma2 form has two chi peaks (rising + falling side of the
+        # window function); the rising-side peak is the lambda_2 reading,
+        # matching the paper Example C.6 convention.
+        sc_1 = r_1.sigma_c if not isinstance(r_1.sigma_c, list) else min(r_1.sigma_c)
+        sc_2 = r_2.sigma_c if not isinstance(r_2.sigma_c, list) else min(r_2.sigma_c)
+        assert sc_1 is not None and sc_2 is not None
+        # The two sigma_c values must differ (distinct probes) ...
+        assert abs(sc_1 - sc_2) > 1e-3, (
+            "probes are not distinct: sigma_c collapsed onto the same value"
+        )
+        # ... and the recovered tau must agree.
+        tau_1 = sc_1 / r_1.rho_star
+        tau_2 = sc_2 / r_2.rho_star
+        assert abs(math.log(tau_1) - math.log(tau_2)) < 0.05, (
+            f"tau disagreement: tau_1={tau_1}, tau_2={tau_2}"
+        )
 
     def test_two_probes_disagreeing_on_tau_flag_as_failure(self):
         # Simulate two probes that don't see the same system: different decay

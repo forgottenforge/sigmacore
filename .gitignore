@@ -107,3 +107,7 @@ build/
 /quantum_results.png
 /nul
 
+dist.old.*/
+build.old.*/
+dist.v410.backup/
+dist.tmp.*/

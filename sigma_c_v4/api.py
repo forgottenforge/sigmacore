@@ -18,6 +18,7 @@ from sigma_c_v4.core.susceptibility import (
     chi_O,
     chi_O_from_callable,
     find_interior_maxima,
+    quadratic_peak_in_log_sigma,
     SmoothingSpec,
 )
 from sigma_c_v4.core.trichotomy import classify
@@ -41,6 +42,7 @@ def analyze(
     eta_O: float = 0.0,
     min_prominence_ratio: float = 0.10,
     label: str = "",
+    preprocessing_scale_equivariant: Optional[bool] = None,
 ) -> Result:
     """
     The hero call. Cite: def:sigmac, thm:trichotomy, prop:structural-reduction.
@@ -143,6 +145,7 @@ def analyze(
             gamma_O=None,
             smoothing=smoothing.as_dict(),
             framework=framework,
+            preprocessing_scale_equivariant=preprocessing_scale_equivariant,
             notes=notes + ["No interior peak -- regime III (sigma_c = bottom)."],
             citations=citations,
             _profile_sigma=sigma_grid,
@@ -158,20 +161,28 @@ def analyze(
 
     # Regime II (multi-mode, vector sigma_c)
     if len(peak_indices) >= 2:
-        sigma_c_vec = [float(sigma_grid[idx]) for idx in peak_indices]
+        # v4.1 field-finding 1: sub-grid refinement also for regime II.
+        sigma_c_vec_refined: List[float] = []
+        any_at_boundary = False
+        for idx in peak_indices:
+            sc_sub, at_bnd = quadratic_peak_in_log_sigma(sigma_grid, chi, idx)
+            sigma_c_vec_refined.append(sc_sub)
+            any_at_boundary = any_at_boundary or at_bnd
         gamma_min = min((g for g in gamma_vals if g is not None), default=None)
         notes.append(
-            f"Multi-mode (regime II): {len(sigma_c_vec)} resolved peaks. "
+            f"Multi-mode (regime II): {len(sigma_c_vec_refined)} resolved peaks. "
             "sigma_c is vector-valued."
         )
         citations.append("thm:multimode")
         return Result(
-            sigma_c=sigma_c_vec, tau=None,
+            sigma_c=sigma_c_vec_refined, tau=None,
             rho_star=win.rho_star, rho_star_source=win.rho_star_source,
             regime=regime,
             gamma_O=gamma_min,
             smoothing=smoothing.as_dict(),
             framework=framework,
+            sigma_c_at_grid_boundary=any_at_boundary,
+            preprocessing_scale_equivariant=preprocessing_scale_equivariant,
             notes=notes,
             citations=citations,
             _profile_sigma=sigma_grid,
@@ -181,7 +192,10 @@ def analyze(
 
     # Regime I (single mode)
     peak_idx = peak_indices[0]
-    sigma_c_val = float(sigma_grid[peak_idx])
+    # v4.1 field-finding 1: sub-grid quadratic refinement of sigma_c.
+    sigma_c_val, at_boundary = quadratic_peak_in_log_sigma(
+        sigma_grid, chi, peak_idx,
+    )
     tau_val = sigma_c_val / win.rho_star if win.rho_star > 0 else None
     gamma_val = gamma_vals[0]
 
@@ -209,13 +223,47 @@ def analyze(
             "(paper Def 8.8). Operationally classify as regime III."
         )
 
+    if at_boundary:
+        notes.append(
+            "sigma_c sits at the scan-grid boundary; sub-grid refinement was "
+            "not applied. The true peak may lie outside the scan range -- "
+            "widen the sigma grid before relying on this value."
+        )
+
+    # v4.1 field-finding 3: A1 preprocessing guard.
+    rho_star_source = win.rho_star_source
+    if preprocessing_scale_equivariant is False:
+        # User declared a fixed-scale preprocessing operator. The framework's
+        # analytic rho_star is no longer the right anchor; surface that.
+        rho_star_source = (
+            f"exploratory:absolute_scale_preprocessing(was {win.rho_star_source})"
+        )
+        notes.append(
+            "preprocessing_scale_equivariant=False: the observable was built "
+            "from a chain that carries an absolute time-scale. Analytic "
+            "rho_star is NOT applicable (paper A1 axiom violated at the "
+            "observable layer). Result is exploratory; .falsifiable returns "
+            "False; cross-window/cross-detector two-probe results are "
+            "uninterpretable as Def 6.7 falsification tests."
+        )
+    elif preprocessing_scale_equivariant is None:
+        notes.append(
+            "preprocessing_scale_equivariant not declared. The framework "
+            "assumes scale-equivariant preprocessing (A1 holds) at the "
+            "observable layer. Declare True/False explicitly to silence "
+            "this note. v4.1: introduced after a downstream-application Phase 1 "
+            "A1 finding."
+        )
+
     return Result(
         sigma_c=sigma_c_val, tau=tau_val,
-        rho_star=win.rho_star, rho_star_source=win.rho_star_source,
+        rho_star=win.rho_star, rho_star_source=rho_star_source,
         regime=regime,
         gamma_O=gamma_val,
         smoothing=smoothing.as_dict(),
         framework=framework,
+        sigma_c_at_grid_boundary=at_boundary,
+        preprocessing_scale_equivariant=preprocessing_scale_equivariant,
         notes=notes,
         citations=citations,
         _profile_sigma=sigma_grid,
@@ -281,6 +329,28 @@ def two_probe_test(
             rho_star_source_1=result_1.rho_star_source,
             rho_star_source_2=result_2.rho_star_source,
         )
+
+    # v4.1 field-finding 2: probes_not_distinct precheck.
+    # When both reported sigma_c values are closer than the coarser scan's
+    # grid step, the two probes are not actually distinct -- a precondition
+    # failure of the two-probe test, not a system faithfulness break.
+    sg1 = getattr(result_1, "_profile_sigma", None)
+    sg2 = getattr(result_2, "_profile_sigma", None)
+    log_distance_sigma_c = abs(math.log(result_1.sigma_c) - math.log(result_2.sigma_c))
+    if sg1 is not None and sg2 is not None and len(sg1) > 1 and len(sg2) > 1:
+        log_step_1 = math.log(sg1[1]) - math.log(sg1[0])
+        log_step_2 = math.log(sg2[1]) - math.log(sg2[0])
+        log_step = max(abs(log_step_1), abs(log_step_2))
+        if log_distance_sigma_c < log_step:
+            return TwoProbeResult(
+                passed=False,
+                delta=float(log_distance_sigma_c),
+                delta_threshold=delta_threshold,
+                cause="probes_not_distinct",
+                tau_1=result_1.tau, tau_2=result_2.tau,
+                rho_star_source_1=result_1.rho_star_source,
+                rho_star_source_2=result_2.rho_star_source,
+            )
 
     log_tau_1 = math.log(result_1.sigma_c) - math.log(result_1.rho_star)
     log_tau_2 = math.log(result_2.sigma_c) - math.log(result_2.rho_star)
