@@ -1,10 +1,10 @@
-# Sigma-C Framework v4.0.0
+# Sigma-C Framework v5.0.0
 
 **Susceptibility-based scale selection across physical, computational, and
 data-driven systems.**
 
 [![License: AGPL-3.0-or-later OR Commercial](https://img.shields.io/badge/License-AGPL_v3_%7C_Commercial-blue.svg)](#license)
-[![Version](https://img.shields.io/badge/version-4.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
+[![Version](https://img.shields.io/badge/version-5.0.0-green.svg)](https://pypi.org/project/sigma-c-framework/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.20548818-blue.svg)](https://doi.org/10.5281/zenodo.20548818)
 [![Status](https://img.shields.io/badge/status-stable-success.svg)]()
 
@@ -202,8 +202,3 @@ through [`SECURITY.md`](SECURITY.md).
 ## Acknowledgements
 
 Sigma-C Framework is developed at **ForgottenForge** by M. C. Wurm.
-AI assistance (Arti Cyan — primarily Anthropic Claude) is used as a
-writing, refactoring, and proof-reading partner; every theorem, proof,
-numerical value, figure, and load-bearing code change is reviewed by
-the human author against primary sources. AI assistance is declared
-explicitly in the foundation paper.

@@ -34,8 +34,8 @@ from sigma_c_v4.core.faithfulness import (
 )
 from sigma_c_v4.theorem_map import cite
 
-__version__ = "4.1.1"
-__paper_version__ = "JSP-submission-2026-06-04"
+__version__ = "5.0.0"
+__paper_version__ = "JSP-submission-2026-06-04 (companion addendum: in preparation)"
 __paper_doi__ = "10.5281/zenodo.20548818"
 __paper_url__ = "https://doi.org/10.5281/zenodo.20548818"
 

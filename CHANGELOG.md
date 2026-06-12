@@ -9,6 +9,124 @@ spectral concentration, and a regime trichotomy.* Zenodo,
 
 ---
 
+## [5.0.0] — 2026-06-13
+
+**Major version increment.** Two independently justified items, each
+validated against self-computed ground truth and combined into one
+release for trace coherence:
+(i) classifier reformulation with explicit, reportable preconditions
+$P_0, P_1, P_2$ on the chi-profile, and an orthogonal spectral-type axis
+(gapped / III-pp / III-anom); (ii) canonical AVS-QS empirical-anchor
+pipeline exposed in `sigma_c_v4.adapters.avsqs`, with the downstream
+drifted convention in `analyze_blind_qpu.compute_kappa` deprecated.
+
+A companion document detailing the reformulations and their numerical
+validation is in preparation; the code release stands on its own
+validation against analytic ground truth (Markov chains, OU process,
+irrational rotations, Pomeau--Manneville maps, doubling map) and against
+the as-found AVS-QS publication-era pipeline.
+
+### Reading the version-aware output
+
+- $\sigma_c$ values are invariant under (i): the chi-profile argmax is
+  unchanged; the reformulation only adds reportable preconditions and a
+  per-precondition output layer.
+- Regime labels in transitional bands now carry explicit
+  $P_0/P_1/P_2$-flagged preconditions instead of unstated assumptions.
+- The spectral-type axis is a new orthogonal output, not a replacement
+  for the geometric trichotomy.
+- A Branch-(ii) caveat now accompanies regime-I labels obtained from a
+  single probe (inferential asymmetry: a contrasting second probe can
+  falsify, agreement cannot corroborate).
+
+### Breaking changes
+
+- **Classifier output format.** `analyze().result.regime` now carries a
+  preconditions dict with `P0, P1, P2` flags and measured `R, a`
+  values. Downstream code that reads `regime` as a bare string will
+  continue to work; code that calls `regime.preconditions` is new and
+  optional.
+- **Regime-I label semantics.** Branch-(ii) regime I (one visible mode)
+  is now labeled `I (probe-conditional)` with a standing caveat
+  attached. Code that consumed `I` as "the slowest system scale" should
+  re-read as "the dominant scale visible to this probe": a single probe
+  cannot rule out a slower mode it suppresses below the visibility
+  threshold $\theta_\chi$.
+- **Spectral-type axis.** New return field
+  `analyze().result.spectral_type` ∈ {gapped, III-pp, III-anom,
+  undetermined}. Existing code that does not consume this field is
+  unaffected.
+
+### Added — Reformulated classifier
+
+- **$T_\ast$ dimensional anchor.** Identification $T_\ast = dt$ for
+  continuous-time processes observed at sampling interval $dt$;
+  $T_\ast = 1$ in step units for discrete-time. Verified on OU process
+  across $\tau_{\rm steps} \in [1, 100]$ with relative bias $\leq 3\%$.
+- **Explicit $P_0/P_1/P_2$ preconditions on the chi-profile.**
+  Mode visibility ($\theta_\chi = 0.30$ of $\chi_{\max}$), scale
+  separation ($R_{\min} = 3$ between rising-peak $\sigma$-values),
+  amplitude balance ($a_{\max} = 3$ between rising-peak $\chi$-heights).
+  Thresholds locked a priori. Each precondition is reported per
+  analysis. Decision rule: regime II requires all three; regime I may
+  arise from any of three distinct precondition failures, distinguished
+  by which one violated.
+- **Orthogonal spectral-type axis.** Locked thresholds: noise floor
+  $3 / \sqrt{n}$, persistence threshold $0.05$ of $|\rho(0)|$,
+  signal-region zero-crossings $\geq 3$ in first 30 lags. Twelve
+  systems correctly classified (six in-sample, six out-of-sample
+  including the doubling map and three OU configurations). Honest
+  edge-band limitation: slow exponential and polynomial
+  autocorrelations cannot be distinguished by persistence alone when
+  $\tau_{\rm eff}$ is comparable to the persistence-check lag window.
+
+### Added — Canonical AVS-QS pipeline
+
+- `sigma_c_v4.adapters.avsqs.compute_susceptibility(gammas, observables)`
+  exposes the as-found observable-curve gradient pipeline of
+  `experiment_particles_v2.py` (lines 623-659, authored
+  M. C. Wurm February 2026) that produced the empirical anchor dataset
+  `particle_results_v2.json` cited in the foundation paper. Returns
+  dict with `sigma_c`, `chi`, `chi_peak`, `scipy_prominence`,
+  `kappa_med`, `kappa_z`, `kappa_prom`. The four conventions are locked
+  as published:
+    - $\sigma_c$ = $\gamma$ at peak with largest scipy prominence
+      (prominence floor $10^{-4}$)
+    - $\kappa_{\rm med}$ = $\chi(\sigma_c) / {\rm median}(\chi)$
+    - $\kappa_z$ = $(\chi(\sigma_c) - {\rm mean}(\chi)) / {\rm std}(\chi)$
+      (numpy default ddof=0)
+    - $\kappa_{\rm prom}$ = scipy_prominence / mean$(\chi \mid \chi \leq Q_{75}(\chi))$
+  The function reproduces all twelve published particle entries
+  (anyon, phonon, skyrmion, exciton, photon, magnon, cooper pair,
+  soliton, roton, plasmon, majorana, polaron) to two decimal places on
+  all four quantities.
+
+### Deprecated
+
+- `analyze_blind_qpu.compute_kappa` (in `onto/particle_plots/`) now
+  emits a `DeprecationWarning` pointing to
+  `sigma_c_v4.adapters.avsqs.compute_susceptibility` as the canonical
+  pipeline. The downstream function uses a different baseline
+  normalization (`mean(chi)` over the full grid) and a different
+  prominence floor ($10^{-3}$) introduced in a 16-circuit blind QPU
+  experiment script post-publication; its kappa values do NOT reproduce
+  the published AVS-QS table. This is a convention-drift issue, not a
+  bug; the function continues to work but should be migrated.
+
+### Reproducibility
+
+- $\sigma_c$ values from prior releases reproduce exactly under v5.0
+  (the chi-profile argmax is unchanged); regime labels in transitional
+  bands may shift per-seed under the new explicit-precondition rules.
+- AVS-QS-paper $\kappa$ values reproduce in full under
+  `sigma_c_v4.adapters.avsqs.compute_susceptibility` against the
+  archived dataset `particle_results_v2.json`.
+- Prior versions remain installable via version pin; downstream code
+  that depends on the prior classifier output format can pin to
+  `sigma-c-framework==4.1.1` until migration.
+
+---
+
 ## [4.1.1] — 2026-06-08
 
 Three field-found improvements from the first end-to-end Phase-1 run of

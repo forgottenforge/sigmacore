@@ -26,6 +26,7 @@ from sigma_c_v4.adapters.conventions import (
     apply_convention,
 )
 from sigma_c_v4.adapters.gallery import render_audit_gallery
+from sigma_c_v4.adapters.avsqs import compute_susceptibility as avsqs_compute_susceptibility
 
 __all__ = [
     "load_qmag_nisq_dataset",
@@ -37,4 +38,5 @@ __all__ = [
     "ConventionResult",
     "apply_convention",
     "render_audit_gallery",
+    "avsqs_compute_susceptibility",
 ]
